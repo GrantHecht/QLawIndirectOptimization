@@ -1,0 +1,18 @@
+name = "QLawIndirectOptimization"
+authors = ["Grant Hecht"]
+
+[deps]
+AstroEOMs = "12e0ea4b-9d0b-496d-8482-ccc475bbac9d"
+AstroUtils = "66020674-cc7a-4e76-9163-0d5ee1962c25"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+SPICE = "5bab7191-041a-5c2e-a744-024b9c3a5062"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+
+[compat]
+DrWatson = "2.12.1"
+julia = "1.8.5"
