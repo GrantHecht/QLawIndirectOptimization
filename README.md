@@ -28,4 +28,4 @@ using DrWatson
 @quickactivate "QLawIndirectOptimization"
 ```
 which auto-activate the project and enable local path handling from DrWatson.
-# QLawSpiralIndirectOptimization
+
