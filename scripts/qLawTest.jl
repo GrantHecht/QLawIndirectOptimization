@@ -17,8 +17,6 @@ spaceCraft  = SimpleSpacecraft(1200.0, 1200.0, 0.3115799539654781, 1800.0)
 
 # Define initial and target orbital elements
 μ           = AstroEOMs.getScaledGravityParameter(meeParams)
-#kep0        = SVector(24505.9 / meeParams.LU, 0.725, 0.06*pi/180, 0.0, 0.0, 0.0)
-#mee0        = AstroUtils.convertState(kep0, AstroUtils.Keplerian, AstroUtils.MEE, μ)
 mee0        = SVector(11359.07 / meeParams.LU, 0.7306, 0.0, 0.2539676, 0.0, 0.0)
 cart0       = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Cartesian, μ)
 kep0, f     = AstroUtils.convertState(cart0, AstroUtils.Cartesian, AstroUtils.Keplerian, μ)
@@ -26,10 +24,10 @@ fullState0  = SVector(mee0[1], mee0[2], mee0[3], mee0[4], mee0[5], mee0[6], spac
 kept        = [42165.0 / meeParams.LU, 0.01, 0.01*pi/180, 270.0*pi/180, 180*pi/180]
 
 # Define qLaw parameters
-oeW          = [1.193, 2.402, 8.999, 0.0, 0.0] 
+oeW          = [2.406, 1.786, 9.469, 0.0, 0.0] 
 qLawPs       = qLawParams(kept, oeW, 1.0, 6578.0, 100.0, μ,
                 spaceCraft.tMax * meeParams.TU^2 / (1000.0*meeParams.MU*meeParams.LU),
-                0.0151, 360)
+                0.0, 50)
 
 # Define EOMs
 function qLawEOMs(u, p, t)
@@ -101,12 +99,20 @@ function term_condition(u,t,integrator)
                         AstroUtils.Keplerian, qLawPs.μ)
 
     # Set tolerances
-    atol        = 10 / meeParams.LU
-    etol        = 0.01
-    itol        = 0.01*pi / 180
-    Ωtol        = 0.01*pi / 180
-    ωtol        = 0.01*pi / 180
+    atol        = 10.0 / meeParams.LU
+    etol        = 0.05
+    itol        = 1.0*pi / 180
+    Ωtol        = 0.1*pi / 180
+    ωtol        = 0.1*pi / 180
     tolVec      = SVector(atol,etol,itol,Ωtol,ωtol)
+
+    # Set weights
+    Wa          = qLawPs.oeW[1] > 0.0 ? 1.0 : 0.0
+    We          = qLawPs.oeW[2] > 0.0 ? 1.0 : 0.0
+    Wi          = qLawPs.oeW[3] > 0.0 ? 1.0 : 0.0
+    WΩ          = qLawPs.oeW[4] > 0.0 ? 1.0 : 0.0
+    Wω          = qLawPs.oeW[5] > 0.0 ? 1.0 : 0.0
+    Ws          = SVector(Wa,We,Wi,WΩ,Wω)
 
     # Compute keplerian element errors (FOR DESCRETE CALLBACK)
     #err         = abs.(qLawPs.oeW.*(u[1:5] - qLawPs.oet))
@@ -116,8 +122,10 @@ function term_condition(u,t,integrator)
     #return stop
 
     # Compute return value
-    val         = sum(qLawPs.oeW .* (abs.(u[1:5] - qLawPs.oet) - tolVec))
-    print(string(val) * "\n")
+    val         = maximum(Ws .* (abs.(u[1:5] - qLawPs.oet) - tolVec))
+    print(string(meeParams.LU*(abs(u[1] - qLawPs.oet[1]) - tolVec[1])) * "\t" *
+          string(abs(u[2] - qLawPs.oet[2]) - tolVec[2]) * "\t" * 
+          string(abs(u[3] - qLawPs.oet[3]) - tolVec[3]) * "\n")
     return val
 end
 
@@ -130,15 +138,18 @@ function coast_condition(u,t,integrator)
     spaceCraft  = ps[2]
     qLawPs      = ps[3]
 
-    # Compute keplerian elements
-    cart        = AstroUtils.convertState(u, AstroUtils.MEE, 
-                        AstroUtils.Cartesian, qLawPs.μ)
-    kep,fl      = AstroUtils.convertState(cart, AstroUtils.Cartesian, 
-                        AstroUtils.Keplerian, qLawPs.μ)
+    if qLawPs.ηr != 0
+        # Compute keplerian elements
+        cart        = AstroUtils.convertState(u, AstroUtils.MEE, 
+                            AstroUtils.Cartesian, qLawPs.μ)
+        kep,fl      = AstroUtils.convertState(cart, AstroUtils.Cartesian, 
+                            AstroUtils.Keplerian, qLawPs.μ)
 
-    # Check effectivity
-    val = qLawCoastContinuousCallbackCheck(kep,qLawPs)
-    return val
+        # Check effectivity
+        val = qLawCoastContinuousCallbackCheck(kep,qLawPs)
+    else
+        return 1.0
+    end
 end
 
 function coast_affect_pos!(integrator)
@@ -164,8 +175,8 @@ else
 end
 
 # Perform numerical integration
-prob = ODEProblem(qLawEOMs, fullState0, (0.0, 200.0), (meeParams,spaceCraft,qLawPs))
-sol  = solve(prob, Vern9(), reltol=1e-12, abstol=1e-12, dtmax = 3600.0 / 86400.0,callback = CallbackSet(tcb,ccb,scb))
+prob = ODEProblem(qLawEOMs, fullState0, (0.0, 119.79), (meeParams,spaceCraft,qLawPs))
+sol  = solve(prob, Vern9(), reltol=1e-12, abstol=1e-12, maxdt = 3600.0 / 86400.0, callback = CallbackSet(tcb,ccb,scb))
 
 ts   = range(0.0, sol.t[end]; length = 10000)
 cart = zeros(length(ts),6)

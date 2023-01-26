@@ -1,3 +1,5 @@
+# Define power function for easy use
+pow(a,b) = a^b
 
 function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
     # Set some constants
@@ -5,13 +7,15 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
     m_petro = 3
     n_petro = 4
     r_petro = 2
+	mu 		= ps.μ
 
-	# t109 = ape - probdata->ape_t;
-	if mod(ape, 2.0*pi) > mod(ps.oet[5], 2.0*pi)
+	#t109 = ape - ps.oet[5];
+	if (mod(ape, 2.0*pi) > mod(ps.oet[5], 2.0*pi))
 		t109 = mod(ape - ps.oet[5], 2.0*pi) >  1.0e-6 ? mod(ape - ps.oet[5], 2.0*pi) : 1.0e-6;
 	else
 		t109 = mod(ape - ps.oet[5], 2.0*pi) < -1.0e-6 ? mod(ape - ps.oet[5], 2.0*pi) : -1.0e-6;
-    end
+	end
+
 
 	t110 = cos(t109);
 	t2 = acos(t110);
@@ -21,15 +25,15 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t6 = 1.0 / (e*e*e*e*e*e);
 	t7 = t4*t4;
 	t8 = t6*t7*(1.0 / 4.0);
-	t9 = t8 + 1.0 / 2.7e1;
+	t9 = t8 + 1.0 / 2.7E1;
 	t10 = sqrt(t9);
 	t11 = 1.0 / e;
 	t13 = t4*t5*(1.0 / 2.0);
 	t14 = t10 + t13;
-	t15 = t14^(1.0 / 3.0);
-	t12 = t11 + t15 - (t10 - t4*t5*(1.0 / 2.0))^(1.0 / 3.0);
+	t15 = pow(t14, 1.0 / 3.0);
+	t12 = t11 + t15 - pow(t10 - t4*t5*(1.0 / 2.0), 1.0 / 3.0);
 	t17 = t10 - t13;
-	t18 = t17^(1.0 / 3.0);
+	t18 = pow(t17, 1.0 / 3.0);
 	t19 = t11 + t15 - t18;
 	t24 = sma*t4;
 	t25 = e*t19;
@@ -38,7 +42,7 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t28 = sma*t4*t27;
 	t16 = t24 - t28;
 	t20 = cos(ape);
-	t32 = ps.μ*sma*t4;
+	t32 = mu*sma*t4;
 	t21 = 1.0 / sqrt(-t32);
 	t22 = b_petro + 1.0;
 	t23 = t19*t19;
@@ -58,9 +62,13 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t42 = t40 - t46;
 	t43 = t38*t42*(1.0 / 2.0);
 	t44 = 1.0 / (e*e*e*e);
-	t45 = t14 < 1.0e-10 ? 1.0e20 : 1.0 / (t14^(2.0 / 3.0));
+
+
+	#t45 = 1.0 / pow(t14, 2.0 / 3.0);
+	t45 = t14 < 1.0e-10 ? 1.0e20 : 1.0 / pow(t14, 2.0 / 3.0);
+
 	t47 = t4*t44*(3.0 / 2.0);
-	t48 = 1.0 / (t17^(2.0 / 3.0));
+	t48 = 1.0 / pow(t17, 2.0 / 3.0);
 	t49 = -t37 + t43 + t47;
 	t50 = t48*t49*(1.0 / 3.0);
 	t51 = t37 + t43 - t47;
@@ -79,7 +87,7 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t66 = e*t62;
 	t63 = t60 - t66;
 	t64 = 1.0 / t63;
-	t67 = 1.0 / ((-t32)^(3.0 / 2.0));
+	t67 = 1.0 / pow(-t32, 3.0 / 2.0);
 	t68 = 1.0 / (ps.tMax*ps.tMax);
 	t69 = sma - ps.oet[1];
 	t70 = 1.0 / sma;
@@ -105,15 +113,18 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t89 = abs(ps.oet[1]);
 	t90 = 1.0 / t89;
 	t91 = t86*t88*t90;
-	t92 = t91^n_petro;
+	t92 = pow(t91, n_petro);
 	t93 = t92 + 1.0;
 	t94 = 1.0 / r_petro;
-	t95 = t93^t94;
-	if mod(ran, 2.0*pi) > mod(ps.oet[4], 2.0*pi)
+	t95 = pow(t93, t94);
+
+	#double t100 = ran-ps.oet[4];
+	if (mod(ran, 2.0*pi) > mod(ps.oet[4], 2.0*pi))
 		t100 = mod(ran - ps.oet[4], 2.0*pi) >  1.0e-6 ? mod(ran - ps.oet[4], 2.0*pi) :  1.0e-6;
 	else
 		t100 = mod(ran - ps.oet[4], 2.0*pi) < -1.0e-6 ? mod(ran - ps.oet[4], 2.0*pi) : -1.0e-6;
-    end
+	end
+
 	t101 = cos(t100);
 	t96 = acos(t101);
 	t97 = 1.0 / sqrt(t59);
@@ -141,16 +152,19 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t123 = 1.0 / sqrt(t34);
 	t124 = 1.0 / (sma*sma);
 	t126 = 1.0 / (t122*t122);
-	t127 = ps.oeW[2]*ps.μ*t68*t70*t72*t113*(1.0 / 4.0);
-	t128 = ps.oeW[3]*ps.μ*t68*t70*t72*t81*t115;
-	t129 = ps.oeW[4]*ps.μ*t68*t70*t72*t102*t103*t116;
-	t130 = ps.oeW[1]*ps.μ*t68*t82*t83*t84*t95*t117*(1.0 / 4.0);
+	t127 = ps.oeW[2]*mu*t68*t70*t72*t113*(1.0 / 4.0);
+	t128 = ps.oeW[3]*mu*t68*t70*t72*t81*t115;
+	t129 = ps.oeW[4]*mu*t68*t70*t72*t102*t103*t116;
+	t130 = ps.oeW[1]*mu*t68*t82*t83*t84*t95*t117*(1.0 / 4.0);
 	t163 = ps.oeW[5]*t111*t112*t126;
 	t131 = t127 + t128 + t129 + t130 - t163;
 	t132 = 1.0 / sqrt(t76);
 	t133 = 1.0 / (t63*t63);
 	t134 = 1.0 / (t122*t122*t122);
+
+	#double t135 = (t61 / abs(t61));
 	t135 = t61 > 0.0 ? 1.0 : -1.0;
+
 	t136 = e*t20*t135;
 	t202 = t3*t20*t61*t97;
 	t137 = t136 - t202;
@@ -165,20 +179,20 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t146 = t139 + t145 - t16*t33*t144*2.0 - t7*t19*t30*t52*2.0;
 	t147 = b_petro*e*ps.tMax*sma*t21*t55*t57*t64*2.0;
 	t148 = b_petro*ps.tMax*sma*t4*t21*t55*t57*t99*t133;
-	t149 = b_petro*e*ps.tMax*ps.μ*t4*t30*t55*t57*t64*t67;
-	t150 = t138 + t147 + t148 + t149 - ps.tMax*ps.μ*sma*t35*t67 - ps.tMax*t11*t21*t123*t146*(1.0 / 2.0);
+	t149 = b_petro*e*ps.tMax*mu*t4*t30*t55*t57*t64*t67;
+	t150 = t138 + t147 + t148 + t149 - ps.tMax*mu*sma*t35*t67 - ps.tMax*t11*t21*t123*t146*(1.0 / 2.0);
 	t151 = e*2.0;
 	t152 = ps.oet[2]*2.0;
 	t153 = t151 - t152;
-	t154 = ps.oeW[2]*e*ps.μ*t68*t70*t77*t113*(1.0 / 2.0);
+	t154 = ps.oeW[2]*e*mu*t68*t70*t77*t113*(1.0 / 2.0);
 	t155 = e*t75*t132;
 	t156 = t74 + t155;
-	t157 = ps.oeW[3]*ps.μ*t68*t70*t72*t80*t81*t156*2.0;
-	t158 = ps.oeW[3]*e*ps.μ*t68*t70*t77*t81*t115*2.0;
+	t157 = ps.oeW[3]*mu*t68*t70*t72*t80*t81*t156*2.0;
+	t158 = ps.oeW[3]*e*mu*t68*t70*t77*t81*t115*2.0;
 	t159 = 1.0 / (t85*t85);
-	t160 = ps.oeW[1]*ps.μ*t68*t82*t83*t84*t95*t159*(1.0 / 4.0);
-	t161 = ps.oeW[4]*ps.μ*t63*t68*t70*t72*t99*t102*t103*2.0;
-	t162 = ps.oeW[4]*e*ps.μ*t68*t70*t77*t102*t103*t116*2.0;
+	t160 = ps.oeW[1]*mu*t68*t82*t83*t84*t95*t159*(1.0 / 4.0);
+	t161 = ps.oeW[4]*mu*t63*t68*t70*t72*t99*t102*t103*2.0;
+	t162 = ps.oeW[4]*e*mu*t68*t70*t77*t102*t103*t116*2.0;
 	t164 = cos(tru);
 	t165 = e*t164;
 	t166 = t165 + 1.0;
@@ -189,22 +203,25 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t171 = t16*t33*t170*2.0;
 	t172 = t168 + t171;
 	t173 = ps.tMax*t11*t21*t123*t172*(1.0 / 2.0);
-	t174 = ps.tMax*ps.μ*t4*t11*t35*t67*(1.0 / 2.0);
-	t175 = t173 + t174 - b_petro*ps.tMax*t4*t21*t55*t57*t64 - b_petro*ps.tMax*ps.μ*sma*t7*t55*t57*t64*t67*(1.0 / 2.0);
-	t176 = ps.oeW[2]*ps.μ*t68*t72*t113*t124*(1.0 / 4.0);
-	t177 = ps.oeW[3]*ps.μ*t68*t72*t81*t115*t124;
-	t178 = ps.oeW[4]*ps.μ*t68*t72*t102*t103*t116*t124;
+	t174 = ps.tMax*mu*t4*t11*t35*t67*(1.0 / 2.0);
+	t175 = t173 + t174 - b_petro*ps.tMax*t4*t21*t55*t57*t64 - b_petro*ps.tMax*mu*sma*t7*t55*t57*t64*t67*(1.0 / 2.0);
+	t176 = ps.oeW[2]*mu*t68*t72*t113*t124*(1.0 / 4.0);
+	t177 = ps.oeW[3]*mu*t68*t72*t81*t115*t124;
+	t178 = ps.oeW[4]*mu*t68*t72*t102*t103*t116*t124;
 	t179 = sma*2.0;
 	t180 = ps.oet[1]*2.0;
 	t181 = t179 - t180;
 	t182 = 1.0 / (sma*sma*sma*sma);
-	t183 = ps.oeW[1]*ps.μ*t68*t83*t84*t95*t117*t182*(3.0 / 4.0);
+	t183 = ps.oeW[1]*mu*t68*t83*t84*t95*t117*t182*(3.0 / 4.0);
+
+	#double t184 = (t69 / abs(t69));
 	t184 = t69 > 0.0 ? 1.0 : -1.0;
+
 	t185 = t94 - 1.0;
-	t186 = t93^t185;
+	t186 = pow(t93, t185);
 	t187 = n_petro - 1.0;
-	t188 = t91^t187;
-	t189 = t176 + t177 + t178 + t183 - ps.oeW[5]*t111*t112*t134*t175*2.0 - ps.oeW[1]*ps.μ*t68*t82*t84*t95*t117*t181*(1.0 / 4.0) - ps.oeW[1]*ps.μ*n_petro*t68*t82*t83*t84*t88*t90*t94*t117*t184*t186*t188*(1.0 / 4.0);
+	t188 = pow(t91, t187);
+	t189 = t176 + t177 + t178 + t183 - ps.oeW[5]*t111*t112*t134*t175*2.0 - ps.oeW[1]*mu*t68*t82*t84*t95*t117*t181*(1.0 / 4.0) - ps.oeW[1]*mu*n_petro*t68*t82*t83*t84*t88*t90*t94*t117*t184*t186*t188*(1.0 / 4.0);
 	t190 = t120*t189;
 	t191 = t190 - ps.Wp*ps.k*t84*t104*t108*t131;
 	t192 = sma*t4*t167;
@@ -214,20 +231,24 @@ function qLawThrustUnitVector(sma, e, inc, ape, ran, tru, ps::qLawParams)
 	t196 = -t195 + 1.0 > 1e-6 ? -t195 + 1.0 : 1e-7;
 	t197 = 1.0 / sqrt(t196);
 	t198 = ps.oeW[5]*t2*t112*t126*t194*t197*2.0;
+
+	#double t199 = (t20 / abs(t20));
 	t199 = t20 > 0.0 ? 1.0 : -1.0;
+
 	t200 = e*t61*t199;
 	t207 = t3*t20*t61*t132;
 	t201 = t200 - t207;
-	t203 = ps.oeW[4]*ps.μ*t63*t68*t70*t72*t102*t103*t137*2.0;
+	t203 = ps.oeW[4]*mu*t63*t68*t70*t72*t102*t103*t137*2.0;
 	t204 = ps.oeW[5]*b_petro*ps.tMax*sma*t4*t21*t55*t57*t111*t112*t133*t134*t137*2.0;
-	t208 = ps.oeW[3]*ps.μ*t68*t70*t72*t80*t81*t201*2.0;
+	t208 = ps.oeW[3]*mu*t68*t70*t72*t80*t81*t201*2.0;
 	t205 = t198 + t203 + t204 - t208;
 	t206 = ape + tru;
 	t209 = sin(t206);
 
-	u    = SVector(sma*t4*t21*t118*(t120*(t154 + t157 + t158 + t160 + t161 + t162 + ps.oeW[5]*t111*t112*t150*1.0 / ((ps.tMax*t11*t21*sqrt(t31 - t29*(t12*t12 - 1.0)) - b_petro*ps.tMax*sma*t4*t21*t55*t57*t64)^3.0)*2.0 - ps.oeW[2]*ps.μ*t68*t70*t72*t153*(1.0 / 4.0) - ps.oeW[1]*ps.μ*t68*t82*t83*t95*t117*(1.0 / 4.0)) - ps.Wp*ps.k*sma*t104*t108*t131) - e*t21*t30*t118*t191*2.0 - sma*t4*t11*t21*t120*t164*t205,
-	               t21*(t120*(t154 + t157 + t158 + t160 + t161 + t162 + ps.oeW[5]*t111*t112*t134*t150*2.0 - ps.oeW[2]*ps.μ*t68*t70*t72*t153*(1.0 / 4.0) - ps.oeW[1]*ps.μ*t68*t82*t83*t95*t117*(1.0 / 4.0)) - ps.Wp*ps.k*sma*t104*t108*t131)*(t164*t193 + e*sma*t4*t167) - t21*t30*t166*t191*2.0 + t11*t21*t118*t120*t193*t205,
-	               -sma*t4*t21*t120*t167*cos(t206)*(ps.oeW[5]*t111*t112*t134*(b_petro*ps.tMax*sma*t4*t21*t64*((t54 / abs(t54))) + b_petro*ps.tMax*sma*t4*t21*t54*t55*1.0 / (t56*t56)*t64)*2.0 + ps.oeW[3]*ps.μ*t68*t70*t72*t115*(inc*2.0 - ps.oet[3]*2.0) + ps.oeW[4]*ps.μ*t54*t56*t68*t70*t72*t102*t116*2.0) - sma*t4*t21*t54*t57*t120*t167*t205*t209 - ps.oeW[4]*ps.μ*t21*t56*t68*t96*t116*t120*t167*t209*sin(t100)*1.0 / sqrt(-t101*t101 + 1.0)*2.0)
+	u 	 = SVector(sma*t4*t21*t118*(t120*(t154 + t157 + t158 + t160 + t161 + t162 + ps.oeW[5]*t111*t112*t150*1.0 / pow(ps.tMax*t11*t21*sqrt(t31 - t29*(t12*t12 - 1.0)) - b_petro*ps.tMax*sma*t4*t21*t55*t57*t64, 3.0)*2.0 - ps.oeW[2]*mu*t68*t70*t72*t153*(1.0 / 4.0) - ps.oeW[1]*mu*t68*t82*t83*t95*t117*(1.0 / 4.0)) - ps.Wp*ps.k*sma*t104*t108*t131) - e*t21*t30*t118*t191*2.0 - sma*t4*t11*t21*t120*t164*t205,
+				   t21*(t120*(t154 + t157 + t158 + t160 + t161 + t162 + ps.oeW[5]*t111*t112*t134*t150*2.0 - ps.oeW[2]*mu*t68*t70*t72*t153*(1.0 / 4.0) - ps.oeW[1]*mu*t68*t82*t83*t95*t117*(1.0 / 4.0)) - ps.Wp*ps.k*sma*t104*t108*t131)*(t164*t193 + e*sma*t4*t167) - t21*t30*t166*t191*2.0 + t11*t21*t118*t120*t193*t205,
+				   -sma*t4*t21*t120*t167*cos(t206)*(ps.oeW[5]*t111*t112*t134*(b_petro*ps.tMax*sma*t4*t21*t64*((t54 / abs(t54))) + b_petro*ps.tMax*sma*t4*t21*t54*t55*1.0 / (t56*t56)*t64)*2.0 + ps.oeW[3]*mu*t68*t70*t72*t115*(inc*2.0 - ps.oet[3]*2.0) + ps.oeW[4]*mu*t54*t56*t68*t70*t72*t102*t116*2.0) - sma*t4*t21*t54*t57*t120*t167*t205*t209 - ps.oeW[4]*mu*t21*t56*t68*t96*t116*t120*t167*t209*sin(t100)*1.0 / sqrt(-t101*t101 + 1.0)*2.0)
+
     un   = sqrt(u[1]*u[1] + u[2]*u[2] + u[3]*u[3])
     uu   = SVector(u[1] / un, u[2] / un, u[3] / un)
 
