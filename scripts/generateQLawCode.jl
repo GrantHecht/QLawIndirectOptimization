@@ -100,13 +100,13 @@ qnFunc          = Symbolics._build_function(Symbolics.JuliaTarget(), dQ, vars...
                         linenumbers = false)
 
 # Write functions to source directory
-asFuncFileName = srcdir(asFuncName * ".jl")
+asFuncFileName = srcdir(asFuncName * "_generated.jl")
 touch(asFuncFileName)
 asFuncFile = open(asFuncFileName, "w")
 write(asFuncFile, string(asFunc[1]))
 close(asFuncFile)
 
-qnFuncFileName = srcdir(qnFuncName * ".jl")
+qnFuncFileName = srcdir(qnFuncName * "_generated.jl")
 touch(qnFuncFileName)
 qnFuncFile = open(qnFuncFileName, "w")
 write(qnFuncFile, string(qnFunc))
