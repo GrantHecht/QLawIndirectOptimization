@@ -9,7 +9,6 @@
 %master's thesis
 %Nobel's thesis does not include "Optimal" control formulation and C code
 %generation, these features were added by Donald Ellison Feb. 6th 2014 
-% Modifications added by Grant Hecht starting Jan. 27th 2023
 %(see note below)
 
 % Declare symbolic variables
@@ -77,8 +76,7 @@ P = exp(k_petro*(1 - rper/rpermin));
 
 % semi-major axis term also has scaling function:
 % Grant Hecht - Removed absolute value from equation
-s_sma = (1+((sma-sma_t)/(m_petro*sma_t))^n_petro)^(1/r_petro);
-
+s_sma = (1+(sma-sma_t)/(m_petro*sma_t)^n_petro)^(1/r_petro);
 % semi-major axis term
 Qsma = s_sma*(((sma - sma_t)/smadotxx)^2);
 
@@ -160,10 +158,7 @@ g(5,3) = r*sin(tru + ape)/(h*sin(inc));
 % This point on, additions by Grant Hecht
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Ds = dQfulldcoe*g;
-D1 = Ds(2);
-D2 = Ds(1);
-D3 = Ds(3);
-Qdot = D1*cos(beta)*cos(alpha) + D2*cos(beta)*sin(alpha) + D3*sin(beta);
+Qdot = Ds(1)*cos(beta)*cos(alpha) + Ds(2)*cos(beta)*sin(alpha) + Ds(3)*sin(beta);
 
 %astar = atan2(-Ds(2),-Ds(1));
 %bstar = atan(-Ds(3) / sqrt(Ds(1)^2 + Ds(2)^2));
