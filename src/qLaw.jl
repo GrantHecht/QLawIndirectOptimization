@@ -1,8 +1,9 @@
 
 # Define some functions for easy use of 
 # c generated code
-pow(a,b) = a^b
-fabs(a)  = abs(a)
+pow(a,b)    = a^b
+fabs(a)     = abs(a)
+fmod(a,b)   = mod(a,b)
 
 # Include qlaw source code
 include(srcdir("qLawParams.jl"))
