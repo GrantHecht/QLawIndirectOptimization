@@ -1,5 +1,5 @@
 
-function  dQn(sma, e, inc, ape, ran, tru, m, alpha, beta, ps::qLawParams)
+function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     # Set some constants
     b_petro = 0.01
     m_petro = 3

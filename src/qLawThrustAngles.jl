@@ -261,7 +261,7 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     fθ = t21*(t120*(t154 + t157 + t158 + t160 + t161 + t162 + Wape*t111*t112*t134*t150*2.0 - We*mu*t68*t70*t72*t153*(1.0 / 4.0) - Wsma*mu*t68*t82*t83*t95*t117*(1.0 / 4.0)) - Wp*k_petro*sma*t104*t108*t131)*(t164*t193 + e*sma*t4*t167) - t21*t30*t166*t191*2.0 + t11*t21*t118*t120*t193*t205;
 	fh = -sma*t4*t21*t120*t167*cos(t206)*(Wape*t111*t112*t134*(b_petro*f*sma*t4*t21*t64*((t54 / fabs(t54))) + b_petro*f*sma*t4*t21*t54*t55*1.0 / (t56*t56)*t64)*2.0 + Winc*mu*t68*t70*t72*t115*(inc*2.0 - inc_t*2.0) + Wran*mu*t54*t56*t68*t70*t72*t102*t116*2.0) - sma*t4*t21*t54*t57*t120*t167*t205*t209 - Wran*mu*t21*t56*t68*t96*t116*t120*t167*t209*sin(t100)*1.0 / sqrt(-t101*t101 + 1.0)*2.0;
 
-    α  = atan(fθ, fr)
-    β  = atan(fh / sqrt(fr*fr + fh*fh))
+    α  = atan(fr, fθ)
+    β  = atan(fh / sqrt(fr*fr + fθ*fθ))
     return (α, β)
 end

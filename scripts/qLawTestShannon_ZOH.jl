@@ -32,11 +32,11 @@ function main()
     cart0       = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Cartesian, μ)
     kep0, f     = AstroUtils.convertState(cart0, AstroUtils.Cartesian, AstroUtils.Keplerian, μ)
     fullState0  = SVector(mee0[1], mee0[2], mee0[3], mee0[4], mee0[5], mee0[6], spaceCraft.initMass)
-    kept        = [42165.0 / meeParams.LU, 0.01, 0.1*pi/180, 0.0, 0.0]
+    kept        = [42165.0 / meeParams.LU, 0.01, 0.01*pi/180, 0.0, 0.0]
 
     # Define qLaw parameters
     oeW          = [1.193, 2.402, 8.999, 0.0, 0.0] 
-    qLawPs       = qLawParams(kept, oeW, 0.0, 6578.0 / meeParams.LU, 1.0, μ,
+    qLawPs       = qLawParams(kept, oeW, 0.0, 6578.0 / meeParams.LU, 1000.0, μ,
                     spaceCraft.tMax * meeParams.TU^2 / (1000.0*meeParams.MU*meeParams.LU),
                     0.0151, 360)
 
@@ -74,8 +74,8 @@ function main()
             α  = qLawPs.α
             β  = qLawPs.β
             at = SVector(qLawPs.tMax*cos(β)*sin(α) / u[7],
-                        qLawPs.tMax*cos(β)*cos(α) / u[7],
-                        qLawPs.tMax*sin(β) / u[7])
+                         qLawPs.tMax*cos(β)*cos(α) / u[7],
+                         qLawPs.tMax*sin(β) / u[7])
             umag = qLawPs.tMax 
         end
 
@@ -145,7 +145,7 @@ function main()
 
         # Perform numerical integration
         prob = ODEProblem(qLawEOMs, fullState0s, (L0, Lf), (meeParams,spaceCraft,qLawPs))
-        sol  = solve(prob, Vern9(), reltol=1e-12, abstol=1e-12)
+        sol  = solve(prob, Vern7(), reltol=1e-8, abstol=1e-8)
 
         # Save info
         while idx <= n && Ls[idx] <= sol.t[end] 
@@ -205,6 +205,7 @@ function main()
     open(datadir("mee.txt"),   "w") do io; writedlm(io,   mee_th); end
     open(datadir("cart.txt"),  "w") do io; writedlm(io,  cart_th); end
     open(datadir("coast.txt"), "w") do io; writedlm(io, Int.(coast_th)); end
+    open(datadir("time.txt"),  "w") do io; writedlm(io, ts); end
 
     #plot(cart[:,1],cart[:,2],cart[:,3])
     #plot(ts,kep[:,1])
