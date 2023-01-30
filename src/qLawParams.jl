@@ -9,9 +9,11 @@ mutable struct qLawParams
     tMax::Float64
     ηr::Float64
     steps::Int
+    α::Float64
+    β::Float64
     coasting::Bool
 end
 
 function qLawParams(oet,oeW,Wp,rpmin,k,μ,tMax,ηr,steps)
-    return qLawParams(oet,oeW,Wp,rpmin,k,μ,tMax,ηr,steps,false)
+    return qLawParams(oet,oeW,Wp,rpmin,k,μ,tMax,ηr,steps,0.0,0.0,false)
 end
