@@ -215,8 +215,13 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     t144 = t8+t130;
     t155 = t72+t148;
     t156 = t73+t147;
+
+    t157 = t157 < 0.0 ? 0.0 : t157
     t159 = pow(t157,1.0/3.0);
+
+    t158 = t158 < 0.0 ? 0.0 : t158
     t160 = pow(t158,1.0/3.0);
+
     t166 = -t165;
     t171 = t29*t165;
     t174 = -t170;
