@@ -85,7 +85,7 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 
     #t62 = ape+t28;
 	if (mod(ape, 2.0*pi) > mod(ps.oet[5], 2.0*pi))
-		t62 = mod(ape - ps.oet[5], 2.0*pi) >  1.0e-6 ? mod(ape - ps.oet[5], 2.0*pi) : 1.0e-6;
+	    t62 = mod(ape - ps.oet[5], 2.0*pi) >  1.0e-6 ? mod(ape - ps.oet[5], 2.0*pi) : 1.0e-6;
 	else
 		t62 = mod(ape - ps.oet[5], 2.0*pi) < -1.0e-6 ? mod(ape - ps.oet[5], 2.0*pi) : -1.0e-6;
 	end
@@ -95,7 +95,7 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 
     #t65 = ran+t43;
 	if (mod(ran, 2.0*pi) > mod(ps.oet[4], 2.0*pi))
-		t65 = mod(ran - ps.oet[4], 2.0*pi) >  1.0e-6 ? mod(ran - ps.oet[4], 2.0*pi) :  1.0e-6;
+	    t65 = mod(ran - ps.oet[4], 2.0*pi) >  1.0e-6 ? mod(ran - ps.oet[4], 2.0*pi) :  1.0e-6;
 	else
 		t65 = mod(ran - ps.oet[4], 2.0*pi) < -1.0e-6 ? mod(ran - ps.oet[4], 2.0*pi) : -1.0e-6;
 	end
@@ -159,8 +159,13 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     t101 = -t89;
     t110 = -t107;
     t112 = exp(t108);
-    t113 = sqrt(t102);
-    t114 = sqrt(t103);
+
+    #t113 = sqrt(t102);
+    t113 = t102 < 0.0 ? 0.0 : sqrt(t102);
+
+    #t114 = sqrt(t103);
+    t114 = t103 < 0.0 ? 0.0 : sqrt(t103)
+
     t121 = t88*t90;
     t123 = -t116;
     t127 = t122+1.0;
@@ -230,8 +235,13 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     t185 = (b_petro*f*mu*sma*t9*t55*t84*t118*(-1.0/2.0))/(t57-t113);
     t186 = (b_petro*f*mu*sma*t9*t55*t84*t118)/(t57*2.0-t113*2.0);
     t195 = -t194;
-    t161 = 1.0/(t159*t159);
-    t162 = 1.0/(t160*t160);
+
+    #t161 = 1.0/(t159*t159);
+    t161 = t159*t159 < 1e-10 ? 1e20 : 1.0 / (t159*t159)
+
+    #t162 = 1.0/(t160*t160);
+    t162 = t160*t160 < 1e-10 ? 1e20 : 1.0 / (t160*t160)
+
     t163 = -t159;
     t164 = -t160;
     t187 = t31+t110+t176;
@@ -277,7 +287,10 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     t218 = -t217;
     t255 = t207+t231+t241+t249;
     t221 = t206+t218;
-    t222 = sqrt(t221);
+
+    #t222 = sqrt(t221);
+    t222 = t221 < 0.0 ? 0.0 : sqrt(t221)
+
     t223 = 1.0/t222;
     t226 = f*mu*sma*t118*t222;
     t227 = f*t30*t117*t222;
@@ -309,9 +322,10 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     t257 = t125*t256;
     t246 = -t245;
     t248 = -t247;
+    t600 = t3 > 0.0 ? 1.0 : -1.0
     D2 = t7*t88*t117*(t245-t264)-t7*t15*t21*t117*(t247-t257)+t5*t30*t88*t117*t125*t251;
     D1 = t117*(t245-t264)*(e*t121+t5*t139)-sma*t19*t67*t117*(t247-t257)+t7*t69*t117*t125*t139*t251;
-    D3 = t117*t121*t125*cos(t10)*(Wape*t53*t97*t235*((b_petro*f*t88*t117*((t3/fabs(t3))))/(t57-t113)+(b_petro*f*t3*t9*t88*t117)/(t25*(t57-t113)))*-2.0+Winc*mu*t39*t48*t92*t141*(inc*2.0-inc_t*2.0)+Wran*mu*t3*t6*t39*t48*t92*t98*t140*2.0)+t3*t27*t55*t117*t121*t125*t251+Wran*mu*t6*t27*t39*t83*t90*t117*t125*t140*sin(t65)*1.0/sqrt(-t68*t68+1.0)*2.0;
+    D3 = t117*t121*t125*cos(t10)*(Wape*t53*t97*t235*((b_petro*f*t88*t117*(t600))/(t57-t113)+(b_petro*f*t3*t9*t88*t117)/(t25*(t57-t113)))*-2.0+Winc*mu*t39*t48*t92*t141*(inc*2.0-inc_t*2.0)+Wran*mu*t3*t6*t39*t48*t92*t98*t140*2.0)+t3*t27*t55*t117*t121*t125*t251+Wran*mu*t6*t27*t39*t83*t90*t117*t125*t140*sin(t65)*1.0/sqrt(-t68*t68+1.0)*2.0;
 
     α  = atan(-D2, -D1)
     β  = atan(-D3 / sqrt(D1*D1 + D2*D2))

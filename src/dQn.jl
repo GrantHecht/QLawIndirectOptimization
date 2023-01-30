@@ -90,6 +90,7 @@ function  dQn(sma, e, inc, ape, ran, tru, m, alpha, beta, ps::qLawParams)
 	else
 		t63 = mod(ape - ps.oet[5], 2.0*pi) < -1.0e-6 ? mod(ape - ps.oet[5], 2.0*pi) : -1.0e-6;
 	end
+    t63 = acos(cos(t63))
 
     t64 = e+t38;
     t65 = inc+t41;
@@ -100,6 +101,7 @@ function  dQn(sma, e, inc, ape, ran, tru, m, alpha, beta, ps::qLawParams)
 	else
 		t66 = mod(ran - ps.oet[4], 2.0*pi) < -1.0e-6 ? mod(ran - ps.oet[4], 2.0*pi) : -1.0e-6;
 	end
+    t66 = acos(cos(t66))
 
     t67 = sma+t47;
     t70 = -t31;
@@ -160,8 +162,13 @@ function  dQn(sma, e, inc, ape, ran, tru, m, alpha, beta, ps::qLawParams)
     t102 = -t90;
     t111 = -t108;
     t113 = exp(t109);
-    t114 = sqrt(t103);
-    t115 = sqrt(t104);
+
+    #t114 = sqrt(t103);
+    t114 = t103 < 0.0 ? 0.0 : sqrt(t103)
+
+    #t115 = sqrt(t104);
+    t115 = t104 < 0.0 ? 0.0 : sqrt(t104)
+
     t122 = t89*t91;
     t124 = -t117;
     t128 = t123+1.0;
@@ -216,8 +223,13 @@ function  dQn(sma, e, inc, ape, ran, tru, m, alpha, beta, ps::qLawParams)
     t145 = t9+t131;
     t156 = t73+t149;
     t157 = t74+t148;
+
+    t158 = t158 < 0.0 ? 0.0 : t158
     t160 = pow(t158,1.0/3.0);
+
+    t159 = t159 < 0.0 ? 0.0 : t159
     t161 = pow(t159,1.0/3.0);
+
     t167 = -t166;
     t172 = t30*t166;
     t175 = -t171;
@@ -226,8 +238,13 @@ function  dQn(sma, e, inc, ape, ran, tru, m, alpha, beta, ps::qLawParams)
     t186 = (b_petro*f*mu*sma*t10*t56*t85*t119*(-1.0/2.0))/(t58-t114);
     t187 = (b_petro*f*mu*sma*t10*t56*t85*t119)/(t58*2.0-t114*2.0);
     t196 = -t195;
-    t162 = 1.0/(t160*t160);
-    t163 = 1.0/(t161*t161);
+
+    #t162 = 1.0/(t160*t160);
+    t162 = t160*t160 < 1e-10 ? 1e20 : 1.0 / (t160*t160)
+
+    #t163 = 1.0/(t161*t161);
+    t163 = t161*t161 < 1e-10 ? 1e20 : 1.0 / (t161*t161)
+
     t164 = -t160;
     t165 = -t161;
     t188 = t32+t111+t177;
@@ -273,7 +290,10 @@ function  dQn(sma, e, inc, ape, ran, tru, m, alpha, beta, ps::qLawParams)
     t219 = -t218;
     t256 = t208+t232+t242+t250;
     t222 = t207+t219;
-    t223 = sqrt(t222);
+
+    #t223 = sqrt(t222);
+    t223 = t222 < 0.0 ? 0.0 : sqrt(t222)
+
     t224 = 1.0/t223;
     t227 = f*mu*sma*t119*t223;
     t228 = f*t31*t118*t223;
