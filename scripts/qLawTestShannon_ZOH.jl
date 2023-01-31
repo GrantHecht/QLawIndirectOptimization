@@ -137,7 +137,7 @@ function main()
 
         # Compute thrust angles
         if !qLawPs.coasting
-            α, β = qLawThrustAngles(kep[1], kep[2], kep[3], kep[4], kep[5], kep[6], 
+            α, β = qLawThrustAngles(kep[1], kep[2], kep[3], kep[5], kep[4], kep[6], 
                         fullState0s[7], qLawPs)
             qLawPs.α = α
             qLawPs.β = β
