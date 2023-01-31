@@ -16,22 +16,21 @@ function main()
     # Define parameters for EOMs
     μs          = 3.986e5
     tMax        = 2.0
-    Isp         = 2000.0
-    m0          = 2000.0
+    Isp         = 3100.0
+    m0          = 3000.0
     meeParams   = MEEParams(initEpoch; LU = 384400.0, MU = 1.0, TU = 24.0*3600.0, μ = μs)
     spaceCraft  = SimpleSpacecraft(m0, m0, tMax, Isp)
 
     # Define initial and target orbital elements
     μ           = AstroEOMs.getScaledGravityParameter(meeParams)
-    kep0        = SVector(24505.9 / meeParams.LU, 0.725, 0.06*pi/180, 0.0, 0.0, 0.0)
+    kep0        = SVector(7000.9 / meeParams.LU, 0.01, 28.5*pi/180, 0.0, 0.0, 0.0)
     mee0        = AstroUtils.convertState(kep0, AstroUtils.Keplerian, AstroUtils.MEE, μ)
-    cart0       = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Cartesian, μ)
     fullState0  = SVector(mee0[1], mee0[2], mee0[3], mee0[4], mee0[5], mee0[6], spaceCraft.initMass)
-    kept        = [26500.0 / meeParams.LU, 0.7, 116*pi/180, 270.0*pi/180, pi]
+    kept        = [26562.0 / meeParams.LU, 0.74105, 63.4*pi/180, 0.0, -90.0*pi / 180.0]
 
     # Define qLaw parameters
     oeW          = [1.0, 1.0, 1.0, 1.0, 1.0] 
-    qLawPs       = qLawParams(kept, oeW, 1.0, 6578.0 / meeParams.LU, 100.0, μ,
+    qLawPs       = qLawParams(kept, oeW, 1.0, 6578.0 / meeParams.LU, 1000.0, μ,
                     spaceCraft.tMax * meeParams.TU^2 / (1000.0*meeParams.MU*meeParams.LU),
                     0.652, 360)
 
@@ -96,8 +95,8 @@ function main()
                     fullState0[4], fullState0[5], 0.0, fullState0[7])
 
     # Specify independant variable span and info
-    nRevs       = 400.0
-    step        = 1.0 * pi / 180
+    nRevs       = 800.0
+    step        = 0.5 * pi / 180
     Lspan       = (fullState0[6], fullState0[6] + nRevs*2*pi)
 
     # Allocate storage arrays
@@ -132,7 +131,7 @@ function main()
 
         # Compute thrust angles
         if !qLawPs.coasting
-            α, β = qLawThrustAngles(kep[1], kep[2], kep[3], kep[4], kep[5], kep[6], 
+            α, β = qLawThrustAngles(kep[1], kep[2], kep[3], kep[5], kep[4], kep[6], 
                         fullState0s[7], qLawPs)
             qLawPs.α = α
             qLawPs.β = β
@@ -140,7 +139,7 @@ function main()
 
         # Perform numerical integration
         prob = ODEProblem(qLawEOMs, fullState0s, (L0, Lf), (meeParams,spaceCraft,qLawPs))
-        sol  = solve(prob, Vern9(), reltol=1e-12, abstol=1e-12)
+        sol  = solve(prob, Vern7(), reltol=1e-8, abstol=1e-8)
 
         # Save info
         while idx <= n && Ls[idx] <= sol.t[end] 
@@ -195,6 +194,7 @@ function main()
     open(datadir("mee.txt"),   "w") do io; writedlm(io,   mee_th); end
     open(datadir("cart.txt"),  "w") do io; writedlm(io,  cart_th); end
     open(datadir("coast.txt"), "w") do io; writedlm(io, Int.(coast_th)); end
+    open(datadir("time.txt"), "w")  do io; writedlm(io, ts); end
 
     #plot(cart[:,1],cart[:,2],cart[:,3])
     #plot(ts,kep[:,1])

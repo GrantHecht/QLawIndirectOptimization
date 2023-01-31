@@ -6,7 +6,21 @@ kep     = readmatrix(dataDir + "kep.txt");
 mee     = readmatrix(dataDir + "mee.txt");
 cart    = readmatrix(dataDir + "cart.txt");
 coast   = readmatrix(dataDir + "coast.txt");
-n       = size(kep,1);
+time    = readmatrix(dataDir + "time.txt");
+
+% Get last n without NaN
+n = 1;
+while ~isnan(time(n)) && n ~= length(time)
+    n = n + 1;
+end
+n = n - 1;
+
+% Strip out nans
+kep     = kep(1:n,:);
+mee     = mee(1:n,:);
+cart    = cart(1:n,:);
+coast   = coast(1:n,:);
+time    = time(1:n,:);
 
 % Get thrust and coasting arcs
 cart_t = nan(size(cart));
