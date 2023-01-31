@@ -1,10 +1,10 @@
 
 function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     # Set some constants
-    b_petro = 0.01
-    m_petro = 3
-    n_petro = 4
-    r_petro = 2
+    b_petro = ps.b_petro
+    m_petro = ps.m_petro
+    n_petro = ps.n_petro
+    r_petro = ps.r_petro
 
     # Grab parameters
     sma_t   = ps.oet[1]
@@ -22,6 +22,14 @@ function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 	mu 		= ps.μ
     rpermin = ps.rpmin
     k_petro = ps.k
+
+    # Keep inclination and eccentricity away from zero
+    if abs(inc) < 1.0e-4
+        inc = inc > 0.0 ? 1e-4 : -1e-4
+    end
+    if e < 1e-4 
+        e = 1e-4
+    end
 
     # Start of generated code
     if (fmod(ape, 2.0*pi) > fmod(ape_t, 2.0*pi))

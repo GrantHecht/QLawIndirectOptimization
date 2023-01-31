@@ -1,13 +1,11 @@
 using DrWatson
 @quickactivate "QLawIndirectOptimization"
 
+using QLawIndirectOptimization
 using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using DifferentialEquations, DiffEqCallbacks, Plots
 using DelimitedFiles
 furnshDefaults()
-
-# Include source
-include(srcdir("includeSource.jl"))
 
 function main()
     # Compute initial epoch
@@ -41,7 +39,7 @@ function main()
                     0.0151, 360)
 
     # Define tolerance on targeted elements
-    atol        = 20.0 / meeParams.LU
+    atol        = 10.0 / meeParams.LU
     etol        = 0.001
     itol        = 0.01*pi / 180
     Ωtol        = 0.01*pi / 180
@@ -196,7 +194,7 @@ function main()
 
         # Update loop variables
         fullState0s = SVector(sol[end]...)
-        L0          = Lf
+        L0          = sol.t[end]
         Lf          = L0 + step
     end
 

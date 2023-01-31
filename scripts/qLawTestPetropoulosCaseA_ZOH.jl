@@ -25,7 +25,6 @@ function main()
     μ           = AstroEOMs.getScaledGravityParameter(meeParams)
     kep0        = SVector(7000.0 / meeParams.LU, 0.01, 0.05*pi/180, 0.0, 0.0, 0.0)
     mee0        = AstroUtils.convertState(kep0, AstroUtils.Keplerian, AstroUtils.MEE, μ)
-    cart0       = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Cartesian, μ)
     fullState0  = SVector(mee0[1], mee0[2], mee0[3], mee0[4], mee0[5], mee0[6], spaceCraft.initMass)
     kept        = [42000.0 / meeParams.LU, 0.01, 10*pi/180, 0.0, pi / 2]
 
