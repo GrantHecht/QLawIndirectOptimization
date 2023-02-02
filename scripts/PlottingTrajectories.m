@@ -54,9 +54,9 @@ end
 % plot(mee(:,7))
 
 figure()
-plot3(cart_t(:,1),cart_t(:,2),cart_t(:,3),"r")
+plot3(cart_t(:,1),cart_t(:,2),cart_t(:,3),".r")
 hold on
-plot3(cart_c(:,1),cart_c(:,2),cart_c(:,3),"b")
+plot3(cart_c(:,1),cart_c(:,2),cart_c(:,3),".b")
 scatter3(cart([1,end],1),cart([1,end],2),cart([1,end],3));
 plotKeplerianOrbit(kept, 360, consts(1))
 

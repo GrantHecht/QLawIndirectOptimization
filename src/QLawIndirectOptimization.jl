@@ -1,8 +1,11 @@
 
 module QLawIndirectOptimization
 
-using StaticArrays, AstroUtils, AstroEOMs
+using StaticArrays
+using AstroUtils, AstroEOMs
+using DelimitedFiles
 using DifferentialEquations
+using DrWatson
 
 # Define some functions for easy use of 
 # c generated code
@@ -15,8 +18,10 @@ include("qLawParams.jl")
 include("qLawThrustAngles.jl")
 include("dQn.jl")
 include("qLawCoastContinuousCallbackCheck.jl")
+include("qLawEOMsSundmanTransformedZOH.jl")
 include("qLaw.jl")
 
 export qLawParams, qLawThrustAngles, dQn, qLawCoastContinuousCallbackCheck
+export qLaw
 
 end

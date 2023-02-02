@@ -1,10 +1,10 @@
 
 function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     # Set some constants
-    b_petro = 0.01
-    m_petro = 3
-    n_petro = 4
-    r_petro = 2
+    b_petro = ps.b_petro
+    m_petro = ps.m_petro
+    n_petro = ps.n_petro
+    r_petro = ps.r_petro
 
     # Grab parameters
     sma_t   = ps.oet[1]
