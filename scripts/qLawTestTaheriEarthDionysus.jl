@@ -4,39 +4,40 @@ using DrWatson
 using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using DifferentialEquations, DiffEqCallbacks, Plots
 using DelimitedFiles
+using QLawIndirectOptimization
 furnshDefaults()
 
 function main()
     # Compute initial epoch
-    initEpoch   = utc2et("2022-10-07T12:00:00")
-
-    # Include source
-    include(srcdir("includeSource.jl"))
+    initEpoch   = utc2et("2005-01-30T00:00:00")
 
     # Define parameters for EOMs
-    μs          = 3.986e5
-    tMax        = 1.0
-    Isp         = 3100.0
-    m0          = 300.0
-    meeParams   = MEEParams(initEpoch; LU = 384400.0, MU = 1.0, TU = 24.0*3600.0, μ = μs)
+    μs          = 132712440018.0
+    tMax        = 0.32
+    Isp         = 3000.0
+    m0          = 4000.0
+    mp          = 3500.0
+    LU          = 1.496e8
+    TU          = 365.0*24.0*3600.0 / (2*pi)
+    meeParams   = MEEParams(initEpoch; LU = LU, MU = 1.0, TU = TU, μ = μs)
     spaceCraft  = SimpleSpacecraft(m0, m0, tMax, Isp)
 
     # Define initial and target orbital elements
     μ           = AstroEOMs.getScaledGravityParameter(meeParams)
-    kep0        = SVector(7000.0 / meeParams.LU, 0.01, 0.05*pi/180, 0.0, 0.0, 0.0)
-    mee0        = AstroUtils.convertState(kep0, AstroUtils.Keplerian, AstroUtils.MEE, μ)
-    cart0       = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Cartesian, μ)
+    cart0       = SVector(-3637871.081 / LU, 147099798.784 / LU, -2261.441 / LU,
+                    -30.265097 * TU/LU, -0.8486854 * TU/LU, 0.0000505 * TU/LU)
+    mee0        = AstroUtils.convertState(cart0, AstroUtils.Cartesian, AstroUtils.MEE, μ)
     fullState0  = SVector(mee0[1], mee0[2], mee0[3], mee0[4], mee0[5], mee0[6], spaceCraft.initMass)
-    kept        = [42000.0 / meeParams.LU, 0.01, 0.0, 0.0, 0.0]
+    kept        = [2.2, 0.542, 13.6*pi/180.0, 82.2*pi/180.0, 204.2*pi/180.0]
 
     # Define qLaw parameters
-    oeW          = [1.0, 1.0, 0.0, 0.0, 0.0] 
+    oeW          = [2.0, 1.0, 1.0, 0.0, 1.0] 
     qLawPs       = qLawParams(kept, oeW, 0.0, 6578.0 / meeParams.LU, 1.0, μ,
                     spaceCraft.tMax * meeParams.TU^2 / (1000.0*meeParams.MU*meeParams.LU),
-                    0.861, 360)
+                    0.05, 360)
 
     # Define tolerance on targeted elements
-    atol        = 10.0 / meeParams.LU
+    atol        = 1000.0 / meeParams.LU
     etol        = 0.001
     itol        = 0.01*pi / 180
     Ωtol        = 0.01*pi / 180
@@ -96,7 +97,7 @@ function main()
                     fullState0[4], fullState0[5], 0.0, fullState0[7])
 
     # Specify independant variable span and info
-    nRevs       = 1000.0
+    nRevs       = 20.0
     step        = 1.0 * pi / 180
     Lspan       = (fullState0[6], fullState0[6] + nRevs*2*pi)
 
@@ -126,8 +127,13 @@ function main()
         # Compute coasting
         qLawPs.coasting = false
         if qLawPs.ηr > 0.0
-            qLawPs.coasting = 
-                qLawCoastContinuousCallbackCheck(kep, fullState0s[7], qLawPs) > 0.0 ? false : true
+            val = try
+                qLawCoastContinuousCallbackCheck(kep, fullState0s[7], qLawPs)
+            catch e
+                display(kep)
+                throw(e)
+            end
+            qLawPs.coasting = val > 0.0 ? false : true
         end
 
         # Compute thrust angles
@@ -186,6 +192,9 @@ function main()
             done = true
         elseif maximum(targError) <= 0.0
             done = true
+        elseif sol[end][7] < (m0 - mp)
+            done = true
+            print("Ran out of propellant!\n")
         end
 
         # Update loop variables
@@ -194,12 +203,22 @@ function main()
         Lf          = L0 + step
     end
 
+    # Construct target orbit states with SI units
+    kepts           = [kept[1]*LU, kept[2], kept[3], kept[4], kept[5]]
+
+    # Construct constants output
+    consts          = [μs]
+
     # Write data to files
     open(datadir("kep.txt"),   "w") do io; writedlm(io,   kep_th); end
     open(datadir("mee.txt"),   "w") do io; writedlm(io,   mee_th); end
     open(datadir("cart.txt"),  "w") do io; writedlm(io,  cart_th); end
     open(datadir("coast.txt"), "w") do io; writedlm(io, Int.(coast_th)); end
     open(datadir("time.txt"),  "w") do io; writedlm(io, ts); end
+    open(datadir("kept.txt"),  "w") do io; writedlm(io, kepts); end
+    open(datadir("consts.txt"),"w") do io; writedlm(io, consts); end
+    
+
 
     #plot(cart[:,1],cart[:,2],cart[:,3])
     #plot(ts,kep[:,1])

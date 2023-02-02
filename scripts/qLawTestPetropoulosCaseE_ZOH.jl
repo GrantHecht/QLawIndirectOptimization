@@ -23,14 +23,14 @@ function main()
 
     # Define initial and target orbital elements
     μ           = AstroEOMs.getScaledGravityParameter(meeParams)
-    kep0        = SVector(7000.9 / meeParams.LU, 0.01, 28.5*pi/180, 0.0, 0.0, 0.0)
+    kep0        = SVector(24505.9 / meeParams.LU, 0.725, 0.06*pi/180, 0.0, 0.0, 0.0)
     mee0        = AstroUtils.convertState(kep0, AstroUtils.Keplerian, AstroUtils.MEE, μ)
     fullState0  = SVector(mee0[1], mee0[2], mee0[3], mee0[4], mee0[5], mee0[6], spaceCraft.initMass)
-    kept        = [26562.0 / meeParams.LU, 0.74105, 63.4*pi/180, 0.0, -90.0*pi / 180.0]
+    kept        = [26500.0 / meeParams.LU, 0.7, 116.0*pi/180, 175.0*pi / 180.0, 270.0*pi / 180.0]
 
     # Define qLaw parameters
     oeW          = [1.0, 1.0, 1.0, 1.0, 1.0] 
-    qLawPs       = qLawParams(kept, oeW, 1.0, 6578.0 / meeParams.LU, 1000.0, μ,
+    qLawPs       = qLawParams(kept, oeW, 1.0, 6578.0 / meeParams.LU, 100.0, μ,
                     spaceCraft.tMax * meeParams.TU^2 / (1000.0*meeParams.MU*meeParams.LU),
                     0.652, 360)
 
@@ -95,8 +95,8 @@ function main()
                     fullState0[4], fullState0[5], 0.0, fullState0[7])
 
     # Specify independant variable span and info
-    nRevs       = 800.0
-    step        = 0.5 * pi / 180
+    nRevs       = 400.0
+    step        = 1.0 * pi / 180
     Lspan       = (fullState0[6], fullState0[6] + nRevs*2*pi)
 
     # Allocate storage arrays

@@ -22,6 +22,14 @@ function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     rpermin = ps.rpmin
     k_petro = ps.k
 
+    # Keep inclination and eccentricity away from zero
+    if inc < 1.0e-5
+        inc = 1.0e-5
+    end
+    if e < 1.0e-5
+        e = 1.0e-5
+    end
+
     # Start of generated code
 	#t109 = ape - ape_t;
 	if (fmod(ape, 2.0*pi) > fmod(ape_t, 2.0*pi))
