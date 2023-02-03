@@ -1,5 +1,5 @@
 
-function qLaw(ps::qLawParams)
+function qLawOriginal(ps::qLawParams)
     # Compute initial MEE states
     mee0 = AstroUtils.convertState(ps.oe0, AstroUtils.Keplerian, 
                 AstroUtils.MEE, ps.μ)
@@ -19,6 +19,8 @@ function qLaw(ps::qLawParams)
         mee_th      = fill(NaN, n, 7)
         kep_th      = fill(NaN, n, 7)
         coast_th    = fill(true, n)
+        angles_th   = fill(NaN, n, 2)
+        cang_th     = fill(NaN, n, 2)
     end
 
     # Begin integration loop
@@ -85,6 +87,13 @@ function qLaw(ps::qLawParams)
                 # Deal with coasting
                 coast_th[idx]      = ps.coasting
 
+                # Deal with angles
+                angles_th[idx,1]   = ps.α
+                angles_th[idx,2]   = ps.β
+                αc,βc              = qLawThrust_Keplerian(mee_us, mee_us[7], ps)
+                cang_th[idx,1]     = αc
+                cang_th[idx,2]     = βc
+
                 # Increment index
                 idx += 1
             end
@@ -131,6 +140,8 @@ function qLaw(ps::qLawParams)
         open(datadir("mee.txt"),   "w") do io; writedlm(io,   mee_th); end
         open(datadir("cart.txt"),  "w") do io; writedlm(io,  cart_th); end
         open(datadir("coast.txt"), "w") do io; writedlm(io, Int.(coast_th)); end
+        open(datadir("angles.txt"),"w") do io; writedlm(io, angles_th); end
+        open(datadir("cang.txt"),  "w") do io; writedlm(io, cang_th); end
         open(datadir("time.txt"),  "w") do io; writedlm(io, ts); end
         open(datadir("kept.txt"),  "w") do io; writedlm(io, kepts); end
         open(datadir("consts.txt"),"w") do io; writedlm(io, consts); end

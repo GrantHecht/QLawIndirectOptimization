@@ -6,6 +6,10 @@ using AstroUtils, AstroEOMs
 using DelimitedFiles
 using DifferentialEquations
 using DrWatson
+using LinearAlgebra
+using Zygote
+import Convex, SCS
+const MOI = Convex.MOI
 
 # Define some functions for easy use of 
 # c generated code
@@ -14,14 +18,17 @@ fabs(a)     = abs(a)
 fmod(a,b)   = mod(a,b)
 
 # Include qlaw source code
-include("qLawParams.jl")
-include("qLawThrustAngles.jl")
-include("dQn.jl")
-include("qLawCoastContinuousCallbackCheck.jl")
-include("qLawEOMsSundmanTransformedZOH.jl")
-include("qLaw.jl")
+include("./qLaw/qLawParams.jl")
+include("./qLaw/qLawThrustAngles.jl")
+include("./qLaw/dQn.jl")
+include("./qLaw/Qpartials_keplerian.jl")
+include("./qLaw/qLawCoastContinuousCallbackCheck.jl")
+include("./qLaw/qLawEOMsSundmanTransformedZOH.jl")
+include("./qLaw/qLawOriginal.jl")
+include("./qLaw/qLawThrust_Keplerian.jl")
 
 export qLawParams, qLawThrustAngles, dQn, qLawCoastContinuousCallbackCheck
-export qLaw
+export qLawOriginal
+export qLawThrust_Keplerian
 
 end

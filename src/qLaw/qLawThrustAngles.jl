@@ -1,3 +1,5 @@
+# Steepest decent Lyapunov control without control constraints
+
 function qLawThrustAngles(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
     # Set some constants
     b_petro = ps.b_petro

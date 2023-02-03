@@ -8,6 +8,8 @@ kep     = readmatrix(dataDir + "kep.txt");
 mee     = readmatrix(dataDir + "mee.txt");
 cart    = readmatrix(dataDir + "cart.txt");
 coast   = readmatrix(dataDir + "coast.txt");
+angles  = readmatrix(dataDir + "angles.txt");
+cangs   = readmatrix(dataDir + "cang.txt");
 time    = readmatrix(dataDir + "time.txt");
 kept    = readmatrix(dataDir + "kept.txt");
 consts  = readmatrix(dataDir + "consts.txt");
@@ -24,6 +26,8 @@ kep     = kep(1:n,:);
 mee     = mee(1:n,:);
 cart    = cart(1:n,:);
 coast   = coast(1:n,:);
+angles  = angles(1:n,:);
+cangs   = cangs(1:n,:);
 time    = time(1:n,:);
 
 % Get thrust and coasting arcs
