@@ -38,6 +38,7 @@ mutable struct qLawParams{DES}
     # QLaw control variables
     α::Float64
     β::Float64
+    T::Float64
     coasting::Bool
 
     # Parameters for the dynamics
@@ -50,6 +51,9 @@ mutable struct qLawParams{DES}
     abstol::Float64
     maxRevs::Float64
     integStep::Float64
+
+    # QLaw type
+    type::Symbol
 
     # Storage info (Switch to type flag in future)
     writeDataToFile::Bool
@@ -75,7 +79,8 @@ function qLawParams(oe0,oet;
     abstol      = 1e-10,
     maxRevs     = 100.0,
     integStep   = 5.0,
-    writeData   = false)
+    writeData   = false,
+    type        = :SD)
 
     # Check argument size
     if length(oe0) != 6
@@ -135,7 +140,7 @@ function qLawParams(oe0,oet;
 
     # Construct parameter type
     qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,eSteps,
-        b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,false,
+        b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
         meeParams,spaceCraft,desolver,reltol,abstol,maxRevs,integStep,
-        writeData)
+        type,writeData)
 end

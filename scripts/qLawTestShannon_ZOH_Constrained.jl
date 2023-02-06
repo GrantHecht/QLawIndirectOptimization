@@ -57,7 +57,7 @@ qLawPs       = qLawParams(kep0d, kept;
                 writeData   = true)
 
 # Testing thrust computation
-mee         = [mee0[1] / meeParams.LU, mee[2], mee[3], mee[4], mee[5], mee[6]]
+mee         = [mee0[1] / meeParams.LU, mee0[2], mee0[3], mee0[4], mee0[5], mee0[6]]
 m           = m0
 
-retcode,u   = qLawThrust_Keplerian(mee, m, qLawPs)
+u           = qLawThrust_Keplerian(mee, m, qLawPs)

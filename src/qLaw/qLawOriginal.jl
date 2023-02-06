@@ -20,7 +20,7 @@ function qLawOriginal(ps::qLawParams)
         kep_th      = fill(NaN, n, 7)
         coast_th    = fill(true, n)
         angles_th   = fill(NaN, n, 2)
-        cang_th     = fill(NaN, n, 2)
+        thrust_th   = fill(NaN, n)
     end
 
     # Begin integration loop
@@ -50,10 +50,10 @@ function qLawOriginal(ps::qLawParams)
 
         # Compute thrust angle
         if !ps.coasting
-            α, β = qLawThrustAngles(kep[1],kep[2],kep[3],
-                        kep[5],kep[4],kep[6],x0[7],ps)
-            ps.α = α
-            ps.β = β
+            α,β,T = qLawThrust_Keplerian(mee, x0[7], ps; method = ps.type)
+            ps.α  = α
+            ps.β  = β
+            ps.T  = T
         end
 
         # Perform numerical integration
@@ -90,9 +90,7 @@ function qLawOriginal(ps::qLawParams)
                 # Deal with angles
                 angles_th[idx,1]   = ps.α
                 angles_th[idx,2]   = ps.β
-                αc,βc              = qLawThrust_Keplerian(mee_us, mee_us[7], ps)
-                cang_th[idx,1]     = αc
-                cang_th[idx,2]     = βc
+                thrust_th[idx]     = ps.coasting ? 0.0 : ps.T
 
                 # Increment index
                 idx += 1
@@ -141,7 +139,7 @@ function qLawOriginal(ps::qLawParams)
         open(datadir("cart.txt"),  "w") do io; writedlm(io,  cart_th); end
         open(datadir("coast.txt"), "w") do io; writedlm(io, Int.(coast_th)); end
         open(datadir("angles.txt"),"w") do io; writedlm(io, angles_th); end
-        open(datadir("cang.txt"),  "w") do io; writedlm(io, cang_th); end
+        open(datadir("thrust.txt"),"w") do io; writedlm(io, thrust_th); end
         open(datadir("time.txt"),  "w") do io; writedlm(io, ts); end
         open(datadir("kept.txt"),  "w") do io; writedlm(io, kepts); end
         open(datadir("consts.txt"),"w") do io; writedlm(io, consts); end

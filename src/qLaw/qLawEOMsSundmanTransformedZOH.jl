@@ -14,10 +14,11 @@ function qLawEOMsSundmanTransformedZOH(u,p,L)
     else
         α   = p.α
         β   = p.β
-        at  = SVector(p.tMax*cos(β)*sin(α) / m,
-                      p.tMax*cos(β)*cos(α) / m,
-                      p.tMax*sin(β) / m)
-        am  = p.tMax
+        T   = p.T
+        at  = SVector(T*cos(β)*sin(α) / m,
+                      T*cos(β)*cos(α) / m,
+                      T*sin(β) / m)
+        am  = T
     end
 
     # Compute state dynamics

@@ -1,5 +1,5 @@
 
-function qLawThrust_Keplerian(mee, m, ps::qLawParams)
+function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
     # Convert to Keplerian elements
     kep,f   = AstroUtils.convertState(mee, AstroUtils.MEE, AstroUtils.Keplerian, ps.μ)
     sma     = kep[1]
@@ -48,108 +48,69 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams)
                       dQdx[1]*A[1,2] + dQdx[2]*A[2,2] + dQdx[3]*A[3,2] + dQdx[4]*A[4,2] + dQdx[5]*A[5,2],
                       dQdx[1]*A[1,3] + dQdx[2]*A[2,3] + dQdx[3]*A[3,3] + dQdx[4]*A[4,3] + dQdx[5]*A[5,3])
 
-    # Solve the steapest decent optimization problem first
-    #   Minimize:   J = dQdxA * u 
-    #   Subject to: ||u|| <= atMax
+    # If using quickest decent with no constraint, directly compute
+    if method == :QDUC
+        # Unconstrianed thrust 
+        atQDUC = -dQdxA
 
-    # Variables
-    u   = Convex.Variable(3)
+        # Thrust direction
+        aMag = norm(atQDUC)
+        dir  = SVector(atQDUC[1] / aMag, atQDUC[2] / aMag, atQDUC[3] / aMag)
 
-    # Construct problem with cost
-    p   = Convex.minimize(Convex.dot(dQdxA, u))
+        # Thrust magnitude
+        tMag = ps.tMax
+    else
+        # Solve the quickest decent optimization problem first
+        atQD = quickestDescentSolve(dQdxA, atMax)
 
-    # Add constraint
-    p.constraints += Convex.norm2(u) <= atMax
+        # Solve with steepest descent using quickest decent solution as guess
+        if method == :SD
+            # Ensure initial guess is in bounds
+            mag = norm(atQD)
+            dir = SVector(atQD[1] / mag, atQD[2] / mag, atQD[3] / mag)
+            u0  = SVector(atMax*dir[1], 
+                          atMax*dir[2], 
+                          atMax*dir[3])
 
-    # Solve
-    Convex.solve!(p, SCS.Optimizer; silent_solver = true)
+            atSD = steepestDescentControl(u0,dQdx,A,B,atMax)
 
-    # If solve is successfull, move to sequential quadratic optimization loop
-    if p.status == MOI.OPTIMAL || p.status == MOI.ALMOST_OPTIMAL
-        uk  = Convex.evaluate(u)
-
-        # Define nonlinear cost function
-        dQdxf       = SVector(dQdx[1], dQdx[2], dQdx[3], dQdx[4], dQdx[5], 0.0)
-        J(u)        = transpose(dQdxf)*(B + A*u) / norm(B + A*u)
-
-        # Define some trust region parameters
-        ρ           = 0.00001 * atMax
-        tol         = 1e-6
-        maxiters    = 50
-
-        # Begin optimization loop
-        k    = 0
-        ukp1 = zeros(3)
-        done = false
-
-        print("Iteration #    diff\n")
-        while !done
-            # Zeroth order taylor series term
-            Jk     = J(uk)
-            
-            # First order taylor series term
-            dJk   = SVector(Zygote.gradient(J, uk)...)
-
-            # Second order taylor series term
-            d2Jk   = Zygote.hessian(J, uk)
-
-            # Compute eigen decomposition of second order term
-            F      = eigen(d2Jk)
-            λs     = F.values
-            U      = F.vectors
-            for i in eachindex(λs)
-                λs[i] = λs[i] < 0.0 ? 0.0 : λs[i]
+            # Check that control is reducing Q
+            dQdx_dot_fn = transpose(dQdx)*(B + A*atSD)/norm(B + A*atSD)
+            if dQdx_dot_fn > 0.0
+                atSD .= 0.0
             end
-            display(λs)
-            P      = U * diagm(λs) * transpose(U)
-            display(P)
 
-            # Force symmetry
-            P[2,1] = P[1,2]
-            P[3,1] = P[1,3]
-            P[3,2] = P[2,3]
+            # COmpute thrust direction
+            aMag = norm(atSD)
+            dir  = SVector(atSD[1]/aMag, atSD[2]/aMag, atSD[3]/aMag)
 
-            # Construct constraints
-            cons   = Convex.Constraint[
-                Convex.norm2(u) <= atMax,
-                Convex.norm2(u - uk) <= ρ
-            ]
+            # Compute thrust magnitude
+            tMag = m*aMag
+            if tMag > ps.tMax
+                tMag = ps.tMax
+            end
+        else
+            # Check that control is reducing Q
+            dQdt = transpose(dQdx)*(B + A*atQD)
+            if dQdt > 0.0
+                atQD .= 0.0
+            end
 
-            # Setup problem
-            p      = Convex.minimize(transpose(dJk)*(u - uk) + 0.5*Convex.quadform(u - uk, P), cons)
-            #p      = Convex.minimize(transpose(dJk)*(u - uk), cons)
+            # Compute thrust direction
+            aMag = norm(atQD)
+            dir  = SVector(atQD[1]/aMag, atQD[2]/aMag, atQD[3]/aMag)
 
-            # Solve the problem
-            Convex.solve!(p, SCS.Optimizer; silent_solver = true, warmstart = k == 0 ? false : true)
-
-            # Get solution
-            ukp1 .= Convex.evaluate(u)
-
-            # Compute differene
-            diff = norm(ukp1 - uk) / norm(uk)
-
-            # Update uk
-            uk .= ukp1
-
-            # Increment iteration counver
-            k += 1
-
-            # Print status
-            print(string(k) * "          " * string(diff) * "\n")
-
-            # Checking for stopping conditions
-            if diff < tol
-                done = true
-            elseif k >= maxiters
-                done = true
+            # Compute thrust magnitude
+            tMag = m*aMag
+            if tMag > ps.tMax
+                tMag = ps.tMax
             end
         end
-
-        uopt    = SVector(m*uk[1], m*uk[2], m*uk[3])
-    else
-        uopt    = SVector(0.0, 0.0, 0.0)
     end
 
-    #return (p.status, uopt)
-    return uopt
+    # Compute angles
+    α = atan(dir[1],dir[2])
+    β = atan(dir[3] / sqrt(dir[1]*dir[1] + dir[2]*dir[2]))
+
+    return (α,β,tMag)
 end

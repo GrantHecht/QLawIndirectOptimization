@@ -199,6 +199,6 @@ function Qpartials_keplerian(sma, e, inc, ran, ape, m, ps::qLawParams)
     dQdape  = t95*(Wape*t38*t56*t151*sin(t44)*1.0/sqrt(-t52*t52+1.0)*2.0+Winc*mu*t27*t34*t62*t65*(t40-t85)*(e*t4*((t2/fabs(t2)))-t2*t4*t12*t91)*2.0-Wran*mu*t16*t27*t34*t65*t71*t113*(t41-t84)*2.0+Wape*b_petro*f*t7*t38*t39*t63*t70*t88*t109*t113*t152*2.0);
     dQdran  = Wran*mu*t16*t27*t34*t59*t65*t95*t105*sin(t47)*1.0/sqrt(-t49*t49+1.0)*-2.0;
 
-    return SVector(dQdsma, dQde, dQdinc, dQdran, dQdape)
+    return SVector(dQdsma, dQde, dQdinc, dQdran, dQdape, 0.0)
 end
 

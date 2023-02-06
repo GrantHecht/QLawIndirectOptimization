@@ -9,7 +9,7 @@ mee     = readmatrix(dataDir + "mee.txt");
 cart    = readmatrix(dataDir + "cart.txt");
 coast   = readmatrix(dataDir + "coast.txt");
 angles  = readmatrix(dataDir + "angles.txt");
-cangs   = readmatrix(dataDir + "cang.txt");
+thrust  = readmatrix(dataDir + "thrust.txt");
 time    = readmatrix(dataDir + "time.txt");
 kept    = readmatrix(dataDir + "kept.txt");
 consts  = readmatrix(dataDir + "consts.txt");
@@ -27,7 +27,7 @@ mee     = mee(1:n,:);
 cart    = cart(1:n,:);
 coast   = coast(1:n,:);
 angles  = angles(1:n,:);
-cangs   = cangs(1:n,:);
+thrust  = thrust(1:n);
 time    = time(1:n,:);
 
 % Get thrust and coasting arcs
@@ -58,11 +58,12 @@ end
 % plot(mee(:,7))
 
 figure()
-plot3(cart_t(:,1),cart_t(:,2),cart_t(:,3),".r")
+plot3(cart_t(:,1),cart_t(:,2),cart_t(:,3),"r")
 hold on
-plot3(cart_c(:,1),cart_c(:,2),cart_c(:,3),".b")
+plot3(cart_c(:,1),cart_c(:,2),cart_c(:,3),"b")
 scatter3(cart([1,end],1),cart([1,end],2),cart([1,end],3));
 plotKeplerianOrbit(kept, 360, consts(1))
 
 axis equal
 grid on
+
