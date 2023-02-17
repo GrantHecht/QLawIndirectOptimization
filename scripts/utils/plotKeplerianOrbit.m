@@ -11,7 +11,7 @@ function plotKeplerianOrbit(kep, steps, mu)
     ths = linspace(0.0, 2*pi, steps);
     rs  = (a * (1.0 - e*e)) ./ (1.0 + e .* cos(ths));
     xs  = rs .* (cos(ths + aop) .* cos(ran) - sin(ths + aop) .* cos(i) .* sin(ran));
-    ys  = rs .* (cos(ths + aop) .* sin(ran) - sin(ths + aop) .* cos(i) .* cos(ran));
+    ys  = rs .* (cos(ths + aop) .* sin(ran) + sin(ths + aop) .* cos(i) .* cos(ran));
     zs  = rs .* (sin(ths + aop) .* sin(i));
 
     plot3(xs,ys,zs, "-k")

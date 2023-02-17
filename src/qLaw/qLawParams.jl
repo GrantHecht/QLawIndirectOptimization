@@ -20,6 +20,7 @@ mutable struct qLawParams{DES}
     rpmin::Float64
     k::Float64
     ηr::Float64
+    ηa::Float64
     steps::Int
     b_petro::Float64
     m_petro::Float64
@@ -71,6 +72,7 @@ function qLawParams(oe0,oet;
     n_petro     = 4.0,
     r_petro     = 2.0,
     ηr_tol      = 0.0,
+    ηa_tol      = 0.0,
     eSteps      = 60,
     meeParams   = MEEParams(0.0, LU = 1.0, MU = 1.0, TU = 1.0),
     spaceCraft  = SimpleSpacecraft(3000.0, 2500.0, 1.0, 3000.0),
@@ -139,7 +141,7 @@ function qLawParams(oe0,oet;
     end
 
     # Construct parameter type
-    qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,eSteps,
+    qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
         meeParams,spaceCraft,desolver,reltol,abstol,maxRevs,integStep,
         type,writeData)

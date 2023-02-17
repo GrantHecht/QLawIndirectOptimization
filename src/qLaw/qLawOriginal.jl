@@ -12,7 +12,7 @@ function qLawOriginal(ps::qLawParams)
     
     # Allocate storage if saving data
     if ps.writeDataToFile
-        n           = ceil(Int, 90.0*ps.maxRevs)
+        n           = ceil(Int, 360.0*ps.maxRevs)
         Ls          = range(Lspan[1], Lspan[2]; length = n)
         ts          = fill(NaN, n)
         cart_th     = fill(NaN, n, 7)
@@ -41,20 +41,12 @@ function qLawOriginal(ps::qLawParams)
             break
         end
 
-        # Compute coasting
-        ps.coasting = false
-        if ps.ηr > 0.0
-            val = qLawCoastContinuousCallbackCheck(kep, x0[7], ps)
-            ps.coasting = val > 0.0 ? false : true
-        end
-
-        # Compute thrust angle
-        if !ps.coasting
-            α,β,T = qLawThrust_Keplerian(mee, x0[7], ps; method = ps.type)
-            ps.α  = α
-            ps.β  = β
-            ps.T  = T
-        end
+        # Compute qLaw control
+        α,β,T,coast = qLawThrust_Keplerian(mee, x0[7], ps; method = ps.type)
+        ps.α  = α
+        ps.β  = β
+        ps.T  = T
+        ps.coasting = coast
 
         # Perform numerical integration
         prob    = ODEProblem(qLawEOMsSundmanTransformedZOH, x0, (L0,Lf), ps)

@@ -11,6 +11,14 @@ function qLawCoastContinuousCallbackCheck(oe,m,ps)
         if dQθ > dQmax; dQmax = dQθ; end
     end
     ηr      = (dQ - dQmax) / (dQmin - dQmax)
+    ηa      = dQ / dQmin
 
-    return ηr - ps.ηr
+    val     = 1.0
+    if ps.ηr > 0.0
+        val = ηr - ps.ηr
+    elseif ps.ηa > 0.0
+        val = ηa - ps.ηa
+    end
+
+    return val
 end

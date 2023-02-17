@@ -54,7 +54,8 @@ qLawPs       = qLawParams(kep0d, kept;
                 desolver    = Vern7(),
                 maxRevs     = 1000.0,
                 integStep   = 5.0,
-                writeData   = true)
+                writeData   = true,
+                type        = :SD)
 
 # # Define upper and lower bounds
 # LB          = [0.1,   0.1,  0.1,  0.1,  0.1, 0.0]

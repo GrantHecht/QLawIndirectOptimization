@@ -16,32 +16,7 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
     dQdx    = Qpartials_keplerian(sma, e, inc, ran, ape, m, ps)
 
     # Compute requirements
-    p       = sma*(1.0 - e*e)
-    h       = sqrt(ps.μ*p)
-    r       = p / (1.0 + e*cos(tru))
-    hinv    = 1.0 / h
-
-    # Compute variational equations (without ta)
-    A       = SMatrix{6,3}(2*sma*sma*hinv*e*sin(tru),       # dadfr
-                           hinv*p*sin(tru),                 # dedfr
-                           0.0,                             # didfr
-                           0.0,                             # dΩdfr
-                           -p*hinv*cos(tru) / e,            # dΩdfr
-                           p*hinv*cos(tru) / e,             # dθdfr
-                           2*sma*sma*hinv*p / r,            # dadfθ
-                           hinv*((p + r)*cos(tru) + r*e),   # dedfθ
-                           0.0,                             # didfθ 
-                           0.0,                             # dΩdfθ
-                           hinv*(p + r)*sin(tru) / e,       # dωdfθ
-                           -(p + r)*hinv*sin(tru) / e,      # dθdfθ
-                           0.0,                             # dadfh
-                           0.0,                             # dedfh
-                           r*hinv*cos(tru + ape),           # didfh
-                           r*hinv*sin(tru + ape) / sin(inc),# dΩdfh
-                           -(r*hinv*sin(tru + ape)*cos(inc) / sin(inc)),
-                           0.0)
-
-    B       = SVector(0.0, 0.0, 0.0, 0.0, 0.0, h / (r*r))
+    A, B    = gaussVarKeplerian(sma, e, inc, ran, ape, tru, ps) 
 
     # Compute product of dQdx^T * A
     dQdxA   = SVector(dQdx[1]*A[1,1] + dQdx[2]*A[2,1] + dQdx[3]*A[3,1] + dQdx[4]*A[4,1] + dQdx[5]*A[5,1],
@@ -61,7 +36,8 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
         tMag = ps.tMax
     else
         # Solve the quickest decent optimization problem first
-        atQD = quickestDescentSolve(dQdxA, atMax)
+        #atQD = quickestDescentSolve(dQdxA, atMax)
+        atQD = -dQdxA
 
         # Solve with steepest descent using quickest decent solution as guess
         if method == :SD
@@ -112,5 +88,29 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
     α = atan(dir[1],dir[2])
     β = atan(dir[3] / sqrt(dir[1]*dir[1] + dir[2]*dir[2]))
 
-    return (α,β,tMag)
+    # Effectivity check
+    coast = false
+    if ps.ηa > 0.0 || ps.ηr > 0.0
+        # Compute dQ, dQmin, and dQmax
+        at = SVector(dir[1]*tMag/m, dir[2]*tMag/m, dir[3]*tMag/m)
+        if method != :SD
+            dQ  = transpose(dQdx)*(B .+ A*at)
+        else
+            f = B .+ A*at
+            dQ  = transpose(dQdx)*f / norm(f)
+        end
+        dQmin, dQmax = qLawEffectivity_Keplerian(mee, m, ps; method = method)
+
+        # Compute effectivity terms
+        ηa      = dQ / dQmin
+        ηr      = (dQ - dQmax) / (dQmin - dQmax)
+        ηa_val  = ηa - ps.ηa 
+        ηr_val  = ηr - ps.ηr
+
+        if ηa_val < 0.0 || ηr_val < 0.0
+            coast = true
+        end
+    end
+
+    return (α,β,tMag,coast)
 end

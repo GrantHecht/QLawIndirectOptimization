@@ -48,7 +48,10 @@ function Qpartials_keplerian(sma, e, inc, ran, ape, m, ps::qLawParams)
     t6 = fabs(t2);
     t7 = fabs(t3);
     t8 = fabs(t4);
+
     t9 = (t4/fabs(t4));
+    t9 = t4 >= 0.0 ? 1.0 : 0.0
+
     t14 = t2*t2;
     t15 = t4*t4;
     t16 = t5*t5;
