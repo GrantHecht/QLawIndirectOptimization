@@ -55,7 +55,10 @@ qLawPs       = qLawParams(kep0d, kept;
                 maxRevs     = 1000.0,
                 integStep   = 5.0,
                 writeData   = true,
-                type        = :QD)
+                type        = :QD,
+                eSteps      = 10,
+                thrustSunAngleConstraint = true,
+                thrustSunAngle = 80.0*pi/180.0)
 
 # # Define upper and lower bounds
 # LB          = [0.1,   0.1,  0.1,  0.1,  0.1, 0.0]

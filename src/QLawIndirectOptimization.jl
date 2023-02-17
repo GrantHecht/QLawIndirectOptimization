@@ -1,6 +1,7 @@
 
 module QLawIndirectOptimization
 
+using Suppressor
 using StaticArrays
 using AstroUtils, AstroEOMs
 using DelimitedFiles
@@ -9,7 +10,7 @@ using DrWatson
 using LinearAlgebra
 using Zygote
 using NLopt
-import Convex, SCS
+import Convex, SCS, COSMO
 const MOI = Convex.MOI
 
 # Define some functions for easy use of 

@@ -48,6 +48,6 @@ qLawPs       = qLawParams(copy(kep0), copy(kept);
                 maxRevs     = 5000.0,
                 integStep   = 1.0,
                 writeData   = true,
-                type        = :SD)
+                type        = :QD)
 
 tf, kepf, retcode = qLawOriginal(qLawPs)

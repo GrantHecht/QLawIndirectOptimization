@@ -46,6 +46,11 @@ mutable struct qLawParams{DES}
     meePs::MEEParams
     scPs::SimpleSpacecraft
 
+    # Thrust-to-sun angle constraint
+    thrustSunAngleConstraint::Bool
+    toSunVec::Vector{Float64} # Assuming constant for now
+    thrustSunAngle::Float64
+
     # Integration parameters
     desolver::DES
     reltol::Float64
@@ -82,7 +87,10 @@ function qLawParams(oe0,oet;
     maxRevs     = 100.0,
     integStep   = 5.0,
     writeData   = false,
-    type        = :SD)
+    type        = :SD,
+    thrustSunAngleConstraint = false,
+    thrustSunAngle           = 30.0*pi/180.0,
+    toSunVec                 = [1.0, 0.0, 0.0])
 
     # Check argument size
     if length(oe0) != 6
@@ -140,9 +148,13 @@ function qLawParams(oe0,oet;
         Ws          = [Wa,We,Wi,WΩ,Wω]
     end
 
+    # Ensure toSunVec is a unit vector
+    mag = norm(toSunVec)
+    toSunVec ./= mag
+
     # Construct parameter type
     qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
-        meeParams,spaceCraft,desolver,reltol,abstol,maxRevs,integStep,
-        type,writeData)
+        meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,
+        desolver,reltol,abstol,maxRevs,integStep,type,writeData)
 end

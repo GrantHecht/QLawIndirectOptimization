@@ -35,9 +35,14 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
         # Thrust magnitude
         tMag = ps.tMax
     else
+        # Construct guess 
+        atQDUC = -dQdxA 
+        mag    = norm(atQDUC)
+        guess  = SVector(atMax*atQDUC[1] / mag, atMax*atQDUC[2] / mag, atMax*atQDUC[3] / mag)
+
         # Solve the quickest decent optimization problem first
-        #atQD = quickestDescentSolve(dQdxA, atMax)
-        atQD = -dQdxA
+        atQD = quickestDescentSolve(guess, dQdxA, atMax, ps)
+        #atQD = -dQdxA
 
         # Solve with steepest descent using quickest decent solution as guess
         if method == :SD
@@ -69,7 +74,7 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
             # Check that control is reducing Q
             dQdt = transpose(dQdx)*(B + A*atQD)
             if dQdt > 0.0
-                atQD .= 0.0
+                atQD = SVector(0.0, 0.0, 0.0)
             end
 
             # Compute thrust direction
