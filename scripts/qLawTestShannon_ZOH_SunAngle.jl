@@ -48,17 +48,17 @@ tolVec      = [atol,etol,itol,Ωtol,ωtol]
 qLawPs       = qLawParams(kep0d, kept;
                 oeW         = oeW,
                 oeTols      = tolVec,
-                ηr_tol      = 0.01,
+                ηr_tol      = 0.001,
                 meeParams   = meeParams,
                 spaceCraft  = spaceCraft,
                 desolver    = Vern7(),
-                maxRevs     = 1000.0,
+                maxRevs     = 500.0,
                 integStep   = 5.0,
                 writeData   = true,
                 type        = :QD,
                 eSteps      = 10,
                 thrustSunAngleConstraint = true,
-                thrustSunAngle = 80.0*pi/180.0)
+                thrustSunAngle = 60.0*pi/180.0)
 
 # # Define upper and lower bounds
 # LB          = [0.1,   0.1,  0.1,  0.1,  0.1, 0.0]

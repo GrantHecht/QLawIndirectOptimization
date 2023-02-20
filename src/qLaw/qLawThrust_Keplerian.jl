@@ -41,7 +41,7 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
         guess  = SVector(atMax*atQDUC[1] / mag, atMax*atQDUC[2] / mag, atMax*atQDUC[3] / mag)
 
         # Solve the quickest decent optimization problem first
-        atQD = quickestDescentSolve(guess, dQdxA, atMax, ps)
+        atQD = quickestDescentSolve(guess, dQdxA, atMax, mee, ps)
         #atQD = -dQdxA
 
         # Solve with steepest descent using quickest decent solution as guess
@@ -63,7 +63,11 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
 
             # COmpute thrust direction
             aMag = norm(atSD)
-            dir  = SVector(atSD[1]/aMag, atSD[2]/aMag, atSD[3]/aMag)
+            if aMag > 0
+                dir  = SVector(atSD[1]/aMag, atSD[2]/aMag, atSD[3]/aMag)
+            else
+                dir  = SVector(0.0, 0.0, 0.0)
+            end
 
             # Compute thrust magnitude
             tMag = m*aMag
@@ -79,7 +83,11 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
 
             # Compute thrust direction
             aMag = norm(atQD)
-            dir  = SVector(atQD[1]/aMag, atQD[2]/aMag, atQD[3]/aMag)
+            if aMag > 0
+                dir  = SVector(atQD[1]/aMag, atQD[2]/aMag, atQD[3]/aMag)
+            else
+                dir = SVector(0.0, 0.0, 0.0)
+            end
 
             # Compute thrust magnitude
             tMag = m*aMag
@@ -90,12 +98,19 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
     end
 
     # Compute angles
-    α = atan(dir[1],dir[2])
-    β = atan(dir[3] / sqrt(dir[1]*dir[1] + dir[2]*dir[2]))
+    flag = true
+    if norm(dir) > 0.0
+        α = atan(dir[1],dir[2])
+        β = atan(dir[3] / sqrt(dir[1]*dir[1] + dir[2]*dir[2]))
+    else
+        flag = false
+        α = 0.0
+        β = 0.0
+    end
 
     # Effectivity check
     coast = false
-    if ps.ηa > 0.0 || ps.ηr > 0.0
+    if ps.ηa > 0.0 || ps.ηr > 0.0 && flag == true
         # Compute dQ, dQmin, and dQmax
         at = SVector(dir[1]*tMag/m, dir[2]*tMag/m, dir[3]*tMag/m)
         if method != :SD
@@ -115,6 +130,10 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
         if ηa_val < 0.0 || ηr_val < 0.0
             coast = true
         end
+    end
+
+    if flag == false
+        coast = true
     end
 
     return (α,β,tMag,coast)

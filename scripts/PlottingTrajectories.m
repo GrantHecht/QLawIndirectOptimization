@@ -14,6 +14,9 @@ time    = readmatrix(dataDir + "time.txt");
 kept    = readmatrix(dataDir + "kept.txt");
 consts  = readmatrix(dataDir + "consts.txt");
 
+% Sun direction
+toSun   = [1.0; 0.0; 0.0];
+
 % Get last n without NaN
 n = 1;
 while ~isnan(time(n)) && n ~= length(time)
@@ -51,6 +54,29 @@ for i = 1:n
     end
 end
 
+% Compute angle between thrust and sun
+sunAngles = zeros(length(time),1);
+for i = 1:length(time)
+    if coast(i) == 0
+        % Construct rotation from LVLH to Inertial
+        ur    = cart(i,1:3) / norm(cart(i,1:3));
+        uh    = cross(cart(i,1:3), cart(i,4:6));
+        uh    = uh / norm(uh);
+        ut    = cross(uh,ur);
+        A     = [ur', ut', uh'];
+    
+        % Construct thrust unit vector
+        ut    = A*[cos(angles(i,2))*sin(angles(i,1)); 
+                   cos(angles(i,2))*cos(angles(i,1));
+                   sin(angles(i,2))];
+    
+        dprod = toSun'*ut;
+        sunAngles(i) = acosd(abs(dprod) / (norm(toSun)*norm(ut)));
+    else
+        sunAngles(i) = NaN;
+    end
+end
+
 % figure()
 % plot(mee(:,1))
 % 
@@ -67,3 +93,5 @@ plotKeplerianOrbit(kept, 360, consts(1))
 axis equal
 grid on
 
+figure()
+scatter(time,sunAngles,".")

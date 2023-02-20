@@ -45,8 +45,11 @@ function qLawEffectivity_Keplerian(mee, m, ps::qLawParams; method = :SD)
             mag    = norm(atQDUC)
             guess  = SVector(atMax*atQDUC[1] / mag, atMax*atQDUC[2] / mag, atMax*atQDUC[3] / mag)
 
+            # Compute MEE state at new ta
+            meeta  = SVector(mee[1], mee[2], mee[3], mee[4], mee[5], ran + ape + θs[i])
+
             # Solve the quickest decent optimization problem first
-            atQD = quickestDescentSolve(guess, dQdxA, atMax, ps)
+            atQD = quickestDescentSolve(guess, dQdxA, atMax, meeta, ps)
             #atQD = -dQdxA
 
             # Solve with steepest descent using quickest decent solution as guess
