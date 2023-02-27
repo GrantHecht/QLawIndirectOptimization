@@ -36,6 +36,7 @@ time    = time(1:n,:);
 % Get thrust and coasting arcs
 cart_t = nan(size(cart));
 cart_c = nan(size(cart));
+stimes = [];
 sw     = false;
 for i = 1:n
     if coast(i) == 0.0
@@ -45,6 +46,7 @@ for i = 1:n
     end
     if i ~= 1
         if coast(i - 1) ~= coast(i)
+            stimes = [stimes;time(i)];
             if coast(i) == 0.0
                 cart_c(i,:) = cart(i,:);
             else
@@ -89,6 +91,8 @@ hold on
 plot3(cart_c(:,1),cart_c(:,2),cart_c(:,3),"b")
 scatter3(cart([1,end],1),cart([1,end],2),cart([1,end],3));
 plotKeplerianOrbit(kept, 360, consts(1))
+xlabel("x")
+ylabel("y")
 
 axis equal
 grid on
