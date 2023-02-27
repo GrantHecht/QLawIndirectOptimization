@@ -22,10 +22,23 @@ function qLawOriginal(ps::qLawParams)
         angles_th   = fill(NaN, n, 2)
         thrust_th   = fill(NaN, n)
     end
+    if ps.returnTrajAtSteps
+        n                   = ceil(Int, (2.0*pi / ps.integStep)*ps.maxRevs)
+        mee_th_steps        = fill(NaN, n, 8)
+        mee_th_steps[1,1]   = mee0[1]
+        mee_th_steps[1,2]   = mee0[2]
+        mee_th_steps[1,3]   = mee0[3]
+        mee_th_steps[1,4]   = mee0[4]
+        mee_th_steps[1,5]   = mee0[5]
+        mee_th_steps[1,6]   = mee0[6]
+        mee_th_steps[1,7]   = ps.m0
+        mee_th_steps[1,8]   = 0.0
+    end
 
     # Begin integration loop
     done    = false
     idx     = 1
+    idxs    = 1
     L0      = Lspan[1]
     Lf      = L0 + ps.integStep
     retcode = :none
@@ -88,6 +101,19 @@ function qLawOriginal(ps::qLawParams)
                 idx += 1
             end
         end
+
+        # Save data at step if desired
+        if ps.returnTrajAtSteps
+            mee_th_steps[idxs,1] = sol[end][1]
+            mee_th_steps[idxs,2] = sol[end][2]
+            mee_th_steps[idxs,3] = sol[end][3]
+            mee_th_steps[idxs,4] = sol[end][4]
+            mee_th_steps[idxs,5] = sol[end][5]
+            mee_th_steps[idxs,6] = Lf
+            mee_th_steps[idxs,7] = sol[end][7]
+            mee_th_steps[idxs,8] = sol[end][6]
+            idxs += 1
+        end
         
         # Compute targeting error
         aerr                = ps.Ws[1]*abs(kep[1] - ps.oet[1]) - ps.oeTols[1]
@@ -138,12 +164,29 @@ function qLawOriginal(ps::qLawParams)
     end
 
     # Compute final kep state
-    kepf,f  = AstroUtils.convertState(x0, AstroUtils.MEE,
+    mee     = SVector(x0[1], x0[2], x0[3], x0[4], x0[5], Lf)
+    kepf,f  = AstroUtils.convertState(mee, AstroUtils.MEE,
                 AstroUtils.Keplerian, ps.μ)
     kepfs   = SVector(kepf[1] * ps.meePs.LU, kepf[2], kepf[3] * 180.0 / pi,
                 kepf[4] * 180.0 / pi, kepf[5] * 180.0 / pi, kepf[6] * 180.0 / pi,
                 x0[7] * ps.meePs.MU)
 
+    # If returning state at steps, cleanup array before returning
+    if ps.returnTrajAtSteps
+        stopidx = 0
+        for i in axes(mee_th_steps,1)
+            if isnan(mee_th_steps[i,1])
+                stopidx = i 
+                break
+            end
+        end
+        mee_th_steps = mee_th_steps[1:stopidx - 1, :]
+    end
+
     # Return final keplerian state, final time, and retcode
-    return (x0[6], kepfs, retcode)
+    if ps.returnTrajAtSteps
+        return (mee_th_steps, kepfs, retcode)
+    else
+        return ([x0[1] x0[2] x0[3] x0[4] x0[5] Lf x0[7]], kepfs, retcode)
+    end
 end

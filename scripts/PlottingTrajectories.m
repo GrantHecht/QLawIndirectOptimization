@@ -22,6 +22,8 @@ n = 1;
 while ~isnan(time(n)) && n ~= length(time)
     n = n + 1;
 end
+
+
 n = n - 1;
 
 % Strip out nans

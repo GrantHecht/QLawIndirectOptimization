@@ -6,6 +6,14 @@ function Qpartials_keplerian(sma, e, inc, ran, ape, m, ps::qLawParams)
     n_petro = ps.n_petro
     r_petro = ps.r_petro
 
+    # Keep e and inc away from singularities
+    if e < 1e-4
+        e = 1e-4
+    end
+    if inc < 1e-4
+        inc = 1e-4
+    end
+
     # Grab parameters
     sma_t   = ps.oet[1]
     e_t     = ps.oet[2]
@@ -154,7 +162,7 @@ function Qpartials_keplerian(sma, e, inc, ran, ape, m, ps::qLawParams)
     t98 = e*t14*t90;
     t103 = t2*t4*t12*t90;
     t109 = 1.0/t105;
-    t116 = pow(t114,1.0/3.0);
+    t116 = t114 < 0.0 ? 0.0 : pow(t114,1.0/3.0);
     t117 = pow(t115,1.0/3.0);
     t121 = Winc*mu*t27*t34*t62*t65*t106;
     t123 = (t104*t111)/2.0;
