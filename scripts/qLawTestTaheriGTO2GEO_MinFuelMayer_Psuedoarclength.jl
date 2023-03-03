@@ -8,7 +8,7 @@ using QLawIndirectOptimization
 furnshDefaults()
 
 # Compute initial epoch
-initEpoch   = utc2et("2005-01-30T00:00:00")
+initEpoch   = utc2et("2012-12-23T12:00:00")
 
 # Define parameters for EOMs
 μs          = 3.986e5
@@ -18,13 +18,16 @@ m0          = 100.0
 mp          = 90.0
 LU          = 6378.0
 TU          = sqrt(LU^3 / μs)
-meeParams   = MEEParams(initEpoch; LU = LU, MU = 1.0, TU = TU, μ = μs)
+meeParams   = MEEParams(initEpoch; LU = LU, MU = 1.0, TU = TU, μ = μs, 
+                costFunction = AstroEOMs.MinimumFuelMayer)
 spaceCraft  = SimpleSpacecraft(m0, mp, tMax, Isp)
+sw          = SwitchingStruct(1.0, 1)
 
 # Define initial and target orbital elements
 cart0       = SVector(6378.9, 0.0, 0.0,
                 0.0, 10.0258, 1.231)
 kep0,f      = AstroUtils.convertState(cart0, AstroUtils.Cartesian, AstroUtils.Keplerian, μs)
+mee0        = Vector(AstroUtils.convertState(kep0, AstroUtils.Keplerian, AstroUtils.MEE, μs))
 kep0d       = Vector(kep0)
 for i in 3:6
     kep0d[i] = mod(kep0d[i], 2.0*pi) * 180.0 / pi
@@ -46,28 +49,37 @@ tolVec      = [atol,etol,itol,Ωtol,ωtol]
 qLawPs       = qLawParams(copy(kep0d), copy(kept);
                 oeW         = oeW,
                 oeTols      = tolVec,
-                ηr_tol      = 0.075,
+                ηr_tol      = 0.15,
                 ηa_tol      = 0.0,
                 meeParams   = meeParams,
                 spaceCraft  = spaceCraft,
                 desolver    = Vern7(),
                 maxRevs     = 20.0,
                 integStep   = 2.0*pi / 180.0,
-                writeData   = false,
+                writeData   = true,
                 returnData  = true,
                 type        = :QDUC)
 
 # Run QLaw sim
 meeAtSteps, kepf, retcode = qLawOriginal(qLawPs)
 
-# Grab state at ΔL = 2*pi
+# Scale initial mee state
+mee0[1] /= meeParams.LU
+
+# Construct interplants starting with state at ΔL = 2*pi
 L0      = meeAtSteps[1,6]
 istart  = 0
 for i in axes(meeAtSteps,1)
-    if abs(meeAtSteps[i,6] - L0 - 2*pi) < 5e-4
+    if abs(meeAtSteps[i,6] - L0 - 2*pi) < 1e-3
         global istart = i
         break
     end
 end
-xf0     = meeAtSteps[istart,1:7]
+interp  = FinalStateInterpolant(meeAtSteps, istart)
 
+# Solve short problem with κ = 0.0
+target      = getFinalStateAndTime(interp, 0.0)
+λ0, retcode = minFuelMayerSolve(mee0, target[1:5], (0.0, target[6]), (spaceCraft,meeParams,sw))
+
+# Perform PC continuation
+pcContinuation(λ0, 1e-4, mee0, interp, (spaceCraft,meeParams,sw))

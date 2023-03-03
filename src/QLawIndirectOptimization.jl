@@ -6,11 +6,17 @@ using StaticArrays
 using AstroUtils, AstroEOMs
 using DelimitedFiles
 using DifferentialEquations
+using DiffEqSensitivity
 using DrWatson
 using LinearAlgebra
 using Zygote
 using NLopt
+using NLsolve
+using ForwardDiff
+using DiffResults
+using Interpolations
 import Convex, SCS, COSMO
+import Heuristics
 const MOI = Convex.MOI
 
 # Define some functions for easy use of 
@@ -33,8 +39,24 @@ include("./qLaw/qLawEOMsSundmanTransformedZOH.jl")
 include("./qLaw/qLawOriginal.jl")
 include("./qLaw/qLawThrust_Keplerian.jl")
 
+# Include indirect optimization source code
+include("./indirectOptimization/memfNonlinearFunction.jl")
+include("./indirectOptimization/memfSolve.jl")
+include("./indirectOptimization/minFuelMayerNonlinearFunction.jl")
+include("./indirectOptimization/minFuelMayerSolve.jl")
+include("./indirectOptimization/FinalStateInterpolant.jl")
+include("./indirectOptimization/minFuelMayerPseudoarclengthNonlinearFunction.jl")
+include("./indirectOptimization/pcContinuation.jl")
+include("./indirectOptimization/ACT/rotationMatrix.jl")
+include("./indirectOptimization/ACT/adjointControlTransformation.jl")
+
 export qLawParams, qLawThrustAngles, dQn, qLawCoastContinuousCallbackCheck
 export qLawOriginal
 export qLawThrust_Keplerian
+export memfSolve, minFuelMayerSolve
+export adjointControlTransformation
+export FinalStateInterpolant, getFinalStateAndTime
+export minFuelMayerPseudoarclengthNonlinearFunction!
+export pcContinuation
 
 end

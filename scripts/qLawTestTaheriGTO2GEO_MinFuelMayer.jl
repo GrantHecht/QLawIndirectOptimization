@@ -5,41 +5,38 @@ using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using DifferentialEquations, DiffEqCallbacks, Plots
 using DelimitedFiles
 using QLawIndirectOptimization
-using Heuristics
 furnshDefaults()
 
 function main()
     # Compute initial epoch
-    initEpoch   = utc2et("2022-10-07T12:00:00")
-
-    # Compute thrust used by Shannon et al.
-    P    = 5.0*1000.0   # [W]
-    Isp  = 1800.0       # [s]
-    g0   = 9.80664      # [m/s^2]
-    η    = 0.55 
-    tMax = 2*η*P / (g0 * Isp)
+    initEpoch   = utc2et("2012-12-23T12:00:00")
 
     # Define parameters for EOMs
     μs          = 3.986e5
-    m0          = 1200.0
+    tMax        = 0.5
+    Isp         = 3100.0
+    m0          = 100.0
+    mp          = 90.0
     LU          = 6378.0
     TU          = sqrt(LU^3 / μs)
-    meeParams   = MEEParams(initEpoch; LU = LU, MU = 1.0, TU = TU, μ = μs,
+    meeParams   = MEEParams(initEpoch; LU = LU, MU = 1.0, TU = TU, μ = μs, 
                     costFunction = AstroEOMs.MinimumFuelMayer)
-    spaceCraft  = SimpleSpacecraft(m0, m0, tMax, Isp)
+    spaceCraft  = SimpleSpacecraft(m0, mp, tMax, Isp)
     sw          = SwitchingStruct(1.0, 1)
 
     # Define initial and target orbital elements
-    mee0        = [11359.07, 0.7306, 0.0, 0.2539676, 0.0, 0.0]
-    kep0, f     = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Keplerian, μs)
+    cart0       = SVector(6378.9, 0.0, 0.0,
+                    0.0, 10.0258, 1.231)
+    kep0,f      = AstroUtils.convertState(cart0, AstroUtils.Cartesian, AstroUtils.Keplerian, μs)
+    mee0        = Vector(AstroUtils.convertState(kep0, AstroUtils.Keplerian, AstroUtils.MEE, μs))
+    kep0d       = Vector(kep0)
+    for i in 3:6
+        kep0d[i] = mod(kep0d[i], 2.0*pi) * 180.0 / pi
+    end
     kept        = [42165.0, 0.01, 0.01, 0.0, 0.0]
 
-    # Convert angles in initial kep state to deg
-    kep0d        = Vector(kep0)
-    kep0d[3:6] .*= 180.0 / pi
-
-    # Define error weights
-    oeW         = [1.193, 2.402, 8.999, 0.0, 0.0] 
+    # Define qLaw parameters
+    oeW          = [1.0, 1.0, 5.0, 0.0, 0.0] 
 
     # Define tolerance on targeted elements
     atol        = 20.0
@@ -50,21 +47,22 @@ function main()
     tolVec      = [atol,etol,itol,Ωtol,ωtol]
 
     # Construct qLaw parameters
-    qLawPs       = qLawParams(kep0d, kept;
+    qLawPs       = qLawParams(copy(kep0d), copy(kept);
                     oeW         = oeW,
                     oeTols      = tolVec,
-                    ηr_tol      = 0.1,
+                    ηr_tol      = 0.15,
+                    ηa_tol      = 0.0,
                     meeParams   = meeParams,
                     spaceCraft  = spaceCraft,
                     desolver    = Vern7(),
-                    maxRevs     = 1000.0,
-                    integStep   = 5.0,
+                    maxRevs     = 20.0,
+                    integStep   = 2.0*pi / 180.0,
                     writeData   = true,
                     returnData  = true,
                     type        = :QDUC)
 
     # Run QLaw sim
-    meeAtSteps, kepf, retcode = qLawOriginal(qLawPs, :minfuel)
+    meeAtSteps, kepf, retcode = qLawOriginal(qLawPs)
 
     # Scale initial mee state
     mee0[1] /= meeParams.LU
@@ -73,7 +71,7 @@ function main()
     L0      = meeAtSteps[1,6]
     istart  = 0
     for i in axes(meeAtSteps,1)
-        if abs(meeAtSteps[i,6] - L0 - 6.0*pi) < 1e-3
+        if abs(meeAtSteps[i,6] - L0 - 2*pi) < 1e-3
             istart = i
             break
         end
@@ -82,15 +80,14 @@ function main()
     tf       = meeAtSteps[istart,8]
 
     # Solve short problem
-    λ0, retcode = minFuelMayerSolve(mee0, meef, (0.0, tf), (spaceCraft,meeParams,sw); 
-                    show_trace = true, ftol = 1e-8)
+    λ0, retcode = minFuelMayerSolve(mee0, meef, (0.0, tf), (spaceCraft,meeParams,sw))
 
     # Compute percent of trajectory which we've solved for
     percs  = floor(Int,100.0 * (istart / size(meeAtSteps, 1)))
     println(string(percs) * "% complete.")
 
     # If successful, continue continuation along qLaw trajectory
-    ftol_steps = [5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6]
+    ftol_steps = [1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6, 1e-6]
     λ0g     = zeros(6)
     λ0s     = [λ0]
     meefs   = [meef]
@@ -111,7 +108,7 @@ function main()
 
             # Grab new final state and time
             meef .= meeAtSteps[idx, 1:7]
-            tf = meeAtSteps[idx, 8]
+            tf    = meeAtSteps[idx, 8]
 
             # Solve using previous solution as guess with decreasing ftol
             success = true
@@ -141,7 +138,7 @@ function main()
                 push!(meefs, copy(meef))
                 push!(tfs, tf)
                 push!(ftols, lastFtol)
-                idx += 1
+                idx += 10
             else
                 # Solve again and print trace
                 λ0, retcode = minFuelMayerSolve(mee0, meef, (0.0, tf), (spaceCraft,meeParams,sw); 
@@ -161,11 +158,11 @@ function main()
         for i in eachindex(meefs)
             meefsm[i,:] .= meefs[i]
         end
-        open(datadir("Shannon_costates_new.txt"), "w") do io; writedlm(io, λ0sm); end
-        open(datadir("Shannon_finalStates_new.txt"), "w") do io; writedlm(io, meefsm); end
-        open(datadir("Shannon_tofs_new.txt"), "w") do io; writedlm(io, tfs); end
-        open(datadir("Shannon_ftols_new.txt"), "w") do io; writedlm(io, ftols); end
-        open(datadir("Shannon_percs_new.txt"), "w") do io; writedlm(io, percents); end
+        open(datadir("TaheriGTO2GEO_costates_new.txt"), "w") do io; writedlm(io, λ0sm); end
+        open(datadir("TaheriGTO2GEO_finalStates_new.txt"), "w") do io; writedlm(io, meefsm); end
+        open(datadir("TaheriGTO2GEO_tofs_new.txt"), "w") do io; writedlm(io, tfs); end
+        open(datadir("TaheriGTO2GEO_ftols_new.txt"), "w") do io; writedlm(io, ftols); end
+        open(datadir("TaheriGTO2GEO_percs_new.txt"), "w") do io; writedlm(io, percents); end
     catch 
         println("Failed to write files.")
     end
@@ -174,3 +171,4 @@ function main()
 end
 
 λ0s, meefs, tfs, ftols, percents = main()
+

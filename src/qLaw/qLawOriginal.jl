@@ -1,3 +1,95 @@
+function qLawOriginalCost(x, psOG, decVecFlags, cost)
+    # Create copy to remain thread safe
+    ps = deepcopy(psOG)
+
+    # Set decision variables in parameters
+    idx = 1
+    for i in eachindex(ps.oeW)
+        if decVecFlags[i] == true
+            ps.oeW[i] = x[idx]
+            idx += 1
+        end
+    end
+    if decVecFlags[7] == true
+        ps.ηr = x[end]
+    end
+
+    # Run simulation
+    J = try
+        meefs, kepfs, retcode = qLawOriginal(ps)
+
+        # Compute cost
+        J = 0.0
+        if cost == :minfuel
+            J -= meefs[7]
+        end
+        if retcode != :success
+            J += 5000.0
+        end
+        J
+    catch 
+        10000.0
+    end
+    return J
+end
+
+function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = true)
+    # Get values of returnTrajAtSteps and writeDataToFile before changing
+    returnDataOG    = ps.returnTrajAtSteps
+    writeDataOG     = ps.writeDataToFile
+    ps.returnTrajAtSteps = false
+    ps.writeDataToFile   = false
+
+    # Get the number of parameters we're optimizing
+    decVecFlags     = [false, false, false, false, false, false, false, false]
+    for i in eachindex(ps.oeW)
+        if ps.oeW != 0.0
+            decVecFlags[i] = true
+        end
+    end
+    if ps.ηr != 0.0
+        decVecFlags[7] = true
+    end
+
+    # Set decision vector bounds (for full dec vec; will be reduced if not targeting
+    # specific elements or using effectivity)
+    decVecUB        = [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 0.8]
+    decVecLB        = zeros(7)
+
+    # Get decision vector bounds for current problem
+    N               = sum(decVecFlags)
+    decVecLBC       = zeros(N)
+    decVecUBC       = zeros(N)
+    idx             = 1
+    for i in eachindex(decVecFlags)
+        if decVecFlags[i] == true
+            decVecUBC[idx] = decVecUB[i]
+            idx += 1
+        end
+    end
+
+    # Optimize
+    prob    = Heuristics.Problem(x -> qLawOriginalCost(x, ps, decVecFlags, cost), decVecLBC, decVecUBC)
+    opts    = Heuristics.Options(;display = true, useParallel = useParallel)
+    pso     = Heuristics.PSO(prob; numParticles = numParticles)
+    Heuristics.optimize!(pso, opts)
+
+    # Reset parameters, simulate, and return
+    idx = 1
+    for i in eachindex(ps.oeW)
+        if decVecFlags[i] == true
+            ps.oeW[i] = pso.results.xbest[idx]
+            idx += 1
+        end
+    end
+    if decVecFlags[7] == true
+        ps.ηr = pso.results.xbest[end]
+    end
+    ps.returnTrajAtSteps = returnDataOG
+    ps.writeDataToFile   = writeDataOG
+
+    return qLawOriginal(ps)
+end
 
 function qLawOriginal(ps::qLawParams)
     # Compute initial MEE states
@@ -23,8 +115,8 @@ function qLawOriginal(ps::qLawParams)
         thrust_th   = fill(NaN, n)
     end
     if ps.returnTrajAtSteps
-        n                   = ceil(Int, (2.0*pi / ps.integStep)*ps.maxRevs)
-        mee_th_steps        = fill(NaN, n, 8)
+        ns                  = ceil(Int, (2.0*pi / ps.integStep)*ps.maxRevs)
+        mee_th_steps        = fill(NaN, ns, 8)
         mee_th_steps[1,1]   = mee0[1]
         mee_th_steps[1,2]   = mee0[2]
         mee_th_steps[1,3]   = mee0[3]
@@ -67,7 +159,7 @@ function qLawOriginal(ps::qLawParams)
 
         # Save info if desired
         if ps.writeDataToFile
-            while idx <= n && Ls[idx] <= sol.t[end] 
+            while idx <= n && Ls[idx] <= sol.t[end] && Ls[idx] >= sol.t[1] 
                 mees_us     = sol(Ls[idx])
                 mee_us      = SVector(mees_us[1], mees_us[2], mees_us[3],
                                 mees_us[4], mees_us[5], Ls[idx], mees_us[7])
