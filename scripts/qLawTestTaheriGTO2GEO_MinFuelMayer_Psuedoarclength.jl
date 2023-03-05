@@ -70,7 +70,7 @@ mee0[1] /= meeParams.LU
 L0      = meeAtSteps[1,6]
 istart  = 0
 for i in axes(meeAtSteps,1)
-    if abs(meeAtSteps[i,6] - L0 - 2*pi) < 1e-3
+    if abs(meeAtSteps[i,6] - L0 - 12*pi) < 1e-3
         global istart = i
         break
     end
@@ -82,4 +82,4 @@ target      = getFinalStateAndTime(interp, 0.0)
 λ0, retcode = minFuelMayerSolve(mee0, target[1:5], (0.0, target[6]), (spaceCraft,meeParams,sw))
 
 # Perform PC continuation
-pcContinuation(λ0, 1e-4, mee0, interp, (spaceCraft,meeParams,sw))
+pcContinuation(λ0, 1e-1, mee0, interp, (spaceCraft,meeParams,sw))

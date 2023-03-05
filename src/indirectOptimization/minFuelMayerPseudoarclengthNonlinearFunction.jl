@@ -20,7 +20,7 @@ function minFuelMayerPseudoarclengthNonlinearFunctionWithJacobian!(F, J, x, xi, 
 
         J .= DiffResults.jacobian(result)
         if F !== nothing
-            F .= DiffResults.value(results)
+            F .= DiffResults.value(result)
         end
     end
     return nothing
