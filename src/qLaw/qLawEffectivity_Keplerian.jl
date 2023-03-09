@@ -49,8 +49,11 @@ function qLawEffectivity_Keplerian(mee, m, ps::qLawParams; method = :SD)
             meeta  = SVector(mee[1], mee[2], mee[3], mee[4], mee[5], ran + ape + θs[i])
 
             # Solve the quickest decent optimization problem first
-            atQD = quickestDescentSolve(guess, dQdxA, atMax, meeta, ps)
-            #atQD = -dQdxA
+            if method != :QDSAA
+                atQD = quickestDescentSolve(guess, dQdxA, atMax, meeta, ps)
+            elseif method == :QDSAA
+                atQD = quickestDescentSunAngleAnalyticSolve(guess, dQdxA, atMax, meeta, ps)
+            end
 
             # Solve with steepest descent using quickest decent solution as guess
             if method == :SD

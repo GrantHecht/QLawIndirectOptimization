@@ -41,8 +41,11 @@ function qLawThrust_Keplerian(mee, m, ps::qLawParams; method = :SD)
         guess  = SVector(atMax*atQDUC[1] / mag, atMax*atQDUC[2] / mag, atMax*atQDUC[3] / mag)
 
         # Solve the quickest decent optimization problem first
-        atQD = quickestDescentSolve(guess, dQdxA, atMax, mee, ps)
-        #atQD = -dQdxA
+        if method != :QDSAA
+            atQD = quickestDescentSolve(guess, dQdxA, atMax, mee, ps)
+        else
+            atQD = quickestDescentSunAngleAnalyticSolve(guess, dQdxA, atMax, mee, ps)
+        end
 
         # Solve with steepest descent using quickest decent solution as guess
         if method == :SD

@@ -66,6 +66,7 @@ mutable struct qLawParams{DES}
 
     # Storage info (Switch to type flag in future)
     writeDataToFile::Bool
+    writeDataOnlyAtSteps::Bool
 end
 
 function qLawParams(oe0,oet;
@@ -91,6 +92,7 @@ function qLawParams(oe0,oet;
     integStep   = 5.0,
     returnData  = false,
     writeData   = false,
+    onlyWriteDataAtSteps = false,
     type        = :QDUC,
     thrustSunAngleConstraint = false,
     thrustSunAngle           = 30.0*pi/180.0,
@@ -160,5 +162,6 @@ function qLawParams(oe0,oet;
     qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
         meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,
-        desolver,reltol,abstol,maxRevs,integStep,type,returnData,writeData)
+        desolver,reltol,abstol,maxRevs,integStep,type,returnData,writeData,
+        onlyWriteDataAtSteps)
 end

@@ -75,13 +75,8 @@ for i = 1:length(time)
                    sin(angles(i,2))];
     
         dprod = toSun'*ut;
-        angle = acosd(dprod / (norm(toSun)*norm(ut)));
-        %if angle < 90
-            sunAngles(i) = angle;
-        %else
-            %sunAngles(i) = 180 - angle;
-        %end
-        %sunAngles(i) = acosd(dprod / (norm(toSun)*norm(ut)));
+        angle = 
+        sunAngles(i) = acosd(dprod / (norm(toSun)*norm(ut)));
     else
         sunAngles(i) = NaN;
     end

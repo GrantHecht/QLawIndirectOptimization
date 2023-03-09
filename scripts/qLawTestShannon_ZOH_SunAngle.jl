@@ -48,69 +48,18 @@ tolVec      = [atol,etol,itol,Ωtol,ωtol]
 qLawPs       = qLawParams(kep0d, kept;
                 oeW         = oeW,
                 oeTols      = tolVec,
-                ηr_tol      = 0.001,
+                ηr_tol      = 0.01,
                 meeParams   = meeParams,
                 spaceCraft  = spaceCraft,
                 desolver    = Vern7(),
                 maxRevs     = 500.0,
-                integStep   = 5.0,
+                integStep   = 0.5,
                 writeData   = true,
-                type        = :QDUC,
+                type        = :QDSAA,
                 eSteps      = 10,
                 thrustSunAngleConstraint = true,
-                thrustSunAngle = 60.0*pi/180.0)
-
-# # Define upper and lower bounds
-# LB          = [0.1,   0.1,  0.1,  0.1,  0.1, 0.0]
-# UB          = [10.0, 10.0, 10.0, 10.0, 10.0, 0.9]
-
-# # Define cost function 
-# function psoCost(x, ps_in)
-#     # Create copy to remain thread safe
-#     ps = deepcopy(ps_in)
-
-#     # Set variables
-#     ps.oeW[1:5] .= @view x[1:5]
-#     ps.ηr = x[6]
-
-#     # Run sim
-#     J = try
-#         tf, kepf, retcode = qLaw(qLawPs)
-
-#         # Compute errors
-#         aerr = ps.Ws[1]*abs(kepf[1] / ps.meePs.LU - ps.oet[1])
-#         eerr = ps.Ws[2]*abs(kepf[2] - ps.oet[2])
-#         ierr = ps.Ws[3]*abs(kepf[3] * pi/180.0 - ps.oet[3])
-#         Ωerr = ps.Ws[4]*abs(acos(cos(kepf[4] * pi/180.0 - ps.oet[4])))
-#         ωerr = ps.Ws[5]*abs(acos(cos(kepf[5] * pi/180.0 - ps.oet[5])))
-#         errSum = aerr + eerr + ierr + 1000.0*Ωerr + 1000.0*ωerr
-
-#         # Minimize time
-#         J   = -kepf[7]
-
-#         # Penalize for failing
-#         if retcode != :success
-#             J += 1000.0 * errSum
-#         end
-#         J
-#     catch
-#         1e9
-#     end
-
-#     return J
-# end
-
-# # Perform PSO optimization
-# prob = Problem(x -> psoCost(x,qLawPs), LB, UB)
-# opts = Options(display = true, maxIters = 1000, maxStallIters = 50, 
-#             funcTol = 1e-6, useParallel = true)
-# pso  = PSO(prob; numParticles = 64)
-# res  = optimize!(pso, opts)
-
-# # Run simulation with final solution
-# qLawPs.oeW .= res.xbest[1:5]
-# qLawPs.ηr   = res.xbest[6]
-# qLawPs.writeDataToFile = true
+                thrustSunAngle = 60.0*pi/180.0,
+                onlyWriteDataAtSteps = false)
 
 # Run QLaw sim
 tf, kepf, retcode = qLawOriginal(qLawPs)

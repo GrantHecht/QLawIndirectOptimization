@@ -103,7 +103,7 @@ function qLawOriginal(ps::qLawParams)
     Lspan = (mee0[6], mee0[6] + 2.0*pi*ps.maxRevs)
     
     # Allocate storage if saving data
-    if ps.writeDataToFile
+    if ps.writeDataToFile && ps.writeDataOnlyAtSteps == false
         n           = ceil(Int, 360.0*ps.maxRevs)
         Ls          = range(Lspan[1], Lspan[2]; length = n)
         ts          = fill(NaN, n)
@@ -113,6 +113,14 @@ function qLawOriginal(ps::qLawParams)
         coast_th    = fill(true, n)
         angles_th   = fill(NaN, n, 2)
         thrust_th   = fill(NaN, n)
+    elseif ps.writeDataToFile
+        ts              = Vector{Float64}(undef, 0)
+        mee_th          = Vector{Vector{Float64}}(undef, 0)
+        cart_th         = Vector{Vector{Float64}}(undef, 0)
+        kep_th          = Vector{Vector{Float64}}(undef, 0)
+        coast_th        = Vector{Bool}(undef, 0)
+        angles_th       = Vector{Vector{Float64}}(undef, 0)
+        thrust_th       = Vector{Float64}(undef, 0)
     end
     if ps.returnTrajAtSteps
         ns                  = ceil(Int, (2.0*pi / ps.integStep)*ps.maxRevs)
@@ -158,7 +166,7 @@ function qLawOriginal(ps::qLawParams)
         sol     = solve(prob, ps.desolver, reltol = ps.reltol, abstol = ps.abstol)
 
         # Save info if desired
-        if ps.writeDataToFile
+        if ps.writeDataToFile && ps.writeDataOnlyAtSteps == false
             while idx <= n && Ls[idx] <= sol.t[end] && Ls[idx] >= sol.t[1] 
                 mees_us     = sol(Ls[idx])
                 mee_us      = SVector(mees_us[1], mees_us[2], mees_us[3],
@@ -192,6 +200,37 @@ function qLawOriginal(ps::qLawParams)
                 # Increment index
                 idx += 1
             end
+        elseif ps.writeDataToFile
+            mees_us     = sol[1]
+            mee_us      = SVector(mees_us[1], mees_us[2], mees_us[3],
+                            mees_us[4], mees_us[5], Lf, mees_us[7])
+
+            push!(ts, mees_us[6])
+            push!(mee_th, zeros(7))
+            mee_th[end][1]      = ps.meePs.LU * mee_us[1]
+            mee_th[end][2:6]   .= mee_us[2:6] 
+            mee_th[end][7]      = ps.meePs.MU * mee_us[7]
+
+            push!(cart_th, zeros(7))
+            cart_us             = AstroUtils.convertState(mee_us, AstroUtils.MEE, 
+                                    AstroUtils.Cartesian, ps.μ)
+            cart_th[end][1:3]  .= ps.meePs.LU*view(cart_us,1:3)
+            cart_th[end][4:6]  .= ps.meePs.LU*view(cart_us,4:6)/ps.meePs.TU
+            cart_th[end][7]     = ps.meePs.MU * mee_us[7]
+
+            push!(kep_th, zeros(7))
+            kep_us,fff          = AstroUtils.convertState(cart_us, AstroUtils.Cartesian, 
+                                    AstroUtils.Keplerian, ps.μ)
+            kep_th[end][1]      = ps.meePs.LU*kep_us[1]
+            kep_th[end][2:6]   .= view(kep_us, 2:6)
+            kep_th[end][7]      = ps.meePs.MU * mee_us[7]
+
+            # Deal with coasting
+            push!(coast_th, ps.coasting)
+
+            # Deal with angles
+            push!(angles_th, [ps.α,ps.β])
+            push!(thrust_th, ps.coasting ? 0.0 : ps.T)
         end
 
         # Save data at step if desired
