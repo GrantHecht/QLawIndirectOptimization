@@ -26,7 +26,7 @@ ephemTspan  = (initEpoch - 100.0, initEpoch + ephemDays*86400.0)
 nPoints     = ceil(Int64, 2*ephemDays)
 tbEphems    = Ephemerides(ephemTspan, nPoints, [10,301], 399, "J2000")
 meeParams   = MEEParams(initEpoch; LU = 384400.0, MU = 1.0, TU = 24.0*3600.0, μ = μs,
-                        thirdBodyEphemerides = tbEphems)
+                        thirdBodyEphemerides = tbEphems, nonsphericalGravity = true)
 spaceCraft  = SimpleSpacecraft(m0, m0, tMax, Isp)
 
 # Define initial and target orbital elements
@@ -39,13 +39,12 @@ kep0d        = Vector(kep0)
 kep0d[3:6] .*= 180.0 / pi
 
 # Define error weights
-oeW         = [1.193, 2.402, 8.999, 0.0, 0.0] 
-#oeW         = [10.0, 
-#               4.092303319221676, 
-#               4.723336735448565, 
-#               4.546948268457167, 
-#               2.8497164860046915]
-#ηr          = 0.5922481336132026
+#oeW         = [1.193, 2.402, 8.999, 0.0, 0.0] 
+oeW         = [2.763325565588479,
+               1.938692331315423,
+               6.69328267835115, 
+               0.0, 0.0]
+ηr          = 0.6316760076602735
 
 # Define tolerance on targeted elements
 atol        = 20.0
@@ -59,12 +58,12 @@ tolVec      = [atol,etol,itol,Ωtol,ωtol]
 qLawPs       = qLawParams(kep0d, kept;
                 oeW         = oeW,
                 oeTols      = tolVec,
-                ηr_tol      = 0.0151,
+                ηr_tol      = ηr,
                 meeParams   = meeParams,
                 spaceCraft  = spaceCraft,
                 desolver    = Vern7(),
-                maxRevs     = 500.0,
-                integStep   = 5.0,
+                maxRevs     = 600.0,
+                integStep   = 0.1,
                 writeData   = true,
                 type        = :QDSAA,
                 eSteps      = 10,
@@ -74,5 +73,5 @@ qLawPs       = qLawParams(kep0d, kept;
                 onlyWriteDataAtSteps = true)
 
 # Run QLaw sim
-#tf, kepf, retcode = qLawOriginal(qLawPs)
-tf, kepf, retcode = qLawOriginal(qLawPs, :minfuel)
+tf, kepf, retcode = qLawOriginal(qLawPs)
+#tf, kepf, retcode = qLawOriginal(qLawPs, :minfuel)
