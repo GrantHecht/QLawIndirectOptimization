@@ -10,7 +10,7 @@ function qLawOriginalCost(x, psOG, decVecFlags, cost)
             idx += 1
         end
     end
-    if decVecFlags[7] == true
+    if decVecFlags[6] == true
         ps.ηr = x[end]
     end
 
@@ -41,20 +41,20 @@ function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = tru
     ps.writeDataToFile   = false
 
     # Get the number of parameters we're optimizing
-    decVecFlags     = [false, false, false, false, false, false, false, false]
+    decVecFlags     = [false, false, false, false, false, false]
     for i in eachindex(ps.oeW)
-        if ps.oeW != 0.0
+        if ps.oeW[i] != 0.0
             decVecFlags[i] = true
         end
     end
     if ps.ηr != 0.0
-        decVecFlags[7] = true
+        decVecFlags[6] = true
     end
 
     # Set decision vector bounds (for full dec vec; will be reduced if not targeting
     # specific elements or using effectivity)
-    decVecUB        = [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 0.8]
-    decVecLB        = zeros(7)
+    decVecUB        = [10.0, 10.0, 10.0, 10.0, 10.0, 0.8]
+    decVecLB        = zeros(6)
 
     # Get decision vector bounds for current problem
     N               = sum(decVecFlags)
@@ -82,7 +82,7 @@ function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = tru
             idx += 1
         end
     end
-    if decVecFlags[7] == true
+    if decVecFlags[6] == true
         ps.ηr = pso.results.xbest[end]
     end
     ps.returnTrajAtSteps = returnDataOG
@@ -111,16 +111,20 @@ function qLawOriginal(ps::qLawParams)
         mee_th      = fill(NaN, n, 7)
         kep_th      = fill(NaN, n, 7)
         coast_th    = fill(true, n)
+        eclipse_th  = fill(true, n)
         angles_th   = fill(NaN, n, 2)
         thrust_th   = fill(NaN, n)
+        sunangle_th = fill(NaN, n)
     elseif ps.writeDataToFile
         ts              = Vector{Float64}(undef, 0)
         mee_th          = Vector{Vector{Float64}}(undef, 0)
         cart_th         = Vector{Vector{Float64}}(undef, 0)
         kep_th          = Vector{Vector{Float64}}(undef, 0)
         coast_th        = Vector{Bool}(undef, 0)
+        eclipse_th      = Vector{Bool}(undef, 0)
         angles_th       = Vector{Vector{Float64}}(undef, 0)
         thrust_th       = Vector{Float64}(undef, 0)
+        sunangle_th     = Vector{Float64}(undef, 0)
     end
     if ps.returnTrajAtSteps
         ns                  = ceil(Int, (2.0*pi / ps.integStep)*ps.maxRevs)
@@ -152,6 +156,39 @@ function qLawOriginal(ps::qLawParams)
         if f != 0
             retcode = :keplerian_singularity
             break
+        end
+
+
+        # If using sun angle constraint or eclipsing with sun ephemeride, compute to sun direction
+        ps.eclipsed = false
+        if ps.meePs.thirdBodyEphemerides !== nothing && 10 in ps.meePs.thirdBodyEphemerides.targIDs
+            # Get position of sun
+            rs  = AstroUtils.getPosition(ps.meePs.thirdBodyEphemerides, 10, 
+                    ps.meePs.initEpoch + x0[6]*ps.meePs.TU)
+
+            # Get position of spacecraft
+            cart_us = AstroUtils.convertState(mee, AstroUtils.MEE, AstroUtils.Cartesian, ps.μ)
+            rsc     = SVector(cart_us[1],
+                              cart_us[2],
+                              cart_us[3])
+
+            # Get vector from spacecraft to sun
+            rssc    = SVector(rs[1] / ps.meePs.LU - rsc[1],
+                              rs[2] / ps.meePs.LU - rsc[2],
+                              rs[3] / ps.meePs.LU - rsc[3])
+
+            # Compute scale to unit vector and set
+            nrssc           = norm(rssc)
+            ps.toSunVec    .= rssc / nrssc
+
+            # Check if in eclipse
+            nrsc            = norm(rsc)
+            aSR             = asin(ps.RS / nrssc)
+            aBR             = asin(ps.RB / nrsc)
+            aD              = acos(-dot(rsc,rssc) / (nrsc*nrssc))
+            if ps.eclipsing && aSR + aBR > aD
+                ps.eclipsed = true
+            end
         end
 
         # Compute qLaw control
@@ -189,21 +226,36 @@ function qLawOriginal(ps::qLawParams)
                 kep_th[idx,2:6]    .= view(kep_us, 2:6)
                 kep_th[idx,7]       = ps.meePs.MU * mee_us[7]
 
-                # Deal with coasting
-                coast_th[idx]      = ps.coasting
+                # Deal with coasting and eclipsing
+                coast_th[idx]       = ps.coasting
+                eclipse_th[idx]     = ps.eclipsed
 
                 # Deal with angles
-                angles_th[idx,1]   = ps.α
-                angles_th[idx,2]   = ps.β
-                thrust_th[idx]     = ps.coasting ? 0.0 : ps.T
+                angles_th[idx,1]    = ps.α
+                angles_th[idx,2]    = ps.β
+                thrust_th[idx]      = ps.coasting ? 0.0 : ps.T
+
+                # Compute sun angle
+                if ps.coasting == false && ps.eclipsed == false
+                    ur                  = cart_us[1:3] / norm(cart_us[1:3])
+                    uh                  = cross(cart_us[1:3], cart_us[4:6])
+                    nh                  = norm(uh)
+                    uh                ./= nh
+                    ut                  = cross(uh,ur)
+                    A                   = hcat(ur,ut,uh)
+                    ut                  = A*SVector(cos(β)*sin(α),
+                                                    cos(β)*cos(α),
+                                                    sin(β))
+                    sunangle_th[idx]    = acosd(dot(ut,ps.toSunVec) / (norm(ut)*norm(ps.toSunVec)))
+                end
 
                 # Increment index
                 idx += 1
             end
         elseif ps.writeDataToFile
-            mees_us     = sol[1]
+            mees_us     = x0
             mee_us      = SVector(mees_us[1], mees_us[2], mees_us[3],
-                            mees_us[4], mees_us[5], Lf, mees_us[7])
+                            mees_us[4], mees_us[5], L0, mees_us[7])
 
             push!(ts, mees_us[6])
             push!(mee_th, zeros(7))
@@ -227,10 +279,27 @@ function qLawOriginal(ps::qLawParams)
 
             # Deal with coasting
             push!(coast_th, ps.coasting)
+            push!(eclipse_th, ps.eclipsed)
 
             # Deal with angles
             push!(angles_th, [ps.α,ps.β])
             push!(thrust_th, ps.coasting ? 0.0 : ps.T)
+
+            # Compute sun angle
+            if ps.coasting == false && ps.eclipsed == false
+                ur                  = cart_us[1:3] / norm(cart_us[1:3])
+                uh                  = cross(cart_us[1:3], cart_us[4:6])
+                nh                  = norm(uh)
+                uh                ./= nh
+                ut                  = cross(uh,ur)
+                A                   = hcat(ur,ut,uh)
+                ut                  = A*SVector(cos(β)*sin(α),
+                                                cos(β)*cos(α),
+                                                sin(β))
+                push!(sunangle_th, acosd(dot(ut,ps.toSunVec) / (norm(ut)*norm(ps.toSunVec))))
+            else
+                push!(sunangle_th, NaN)
+            end
         end
 
         # Save data at step if desired
@@ -283,15 +352,17 @@ function qLawOriginal(ps::qLawParams)
         consts          = [ps.μ * ps.meePs.LU^3 / ps.meePs.TU^2]
 
         # Write data to files
-        open(datadir("kep.txt"),   "w") do io; writedlm(io,   kep_th); end
-        open(datadir("mee.txt"),   "w") do io; writedlm(io,   mee_th); end
-        open(datadir("cart.txt"),  "w") do io; writedlm(io,  cart_th); end
-        open(datadir("coast.txt"), "w") do io; writedlm(io, Int.(coast_th)); end
-        open(datadir("angles.txt"),"w") do io; writedlm(io, angles_th); end
-        open(datadir("thrust.txt"),"w") do io; writedlm(io, thrust_th); end
-        open(datadir("time.txt"),  "w") do io; writedlm(io, ts); end
-        open(datadir("kept.txt"),  "w") do io; writedlm(io, kepts); end
-        open(datadir("consts.txt"),"w") do io; writedlm(io, consts); end
+        open(datadir("kep.txt"),   "w")     do io; writedlm(io,   kep_th); end
+        open(datadir("mee.txt"),   "w")     do io; writedlm(io,   mee_th); end
+        open(datadir("cart.txt"),  "w")     do io; writedlm(io,  cart_th); end
+        open(datadir("coast.txt"), "w")     do io; writedlm(io, Int.(coast_th)); end
+        open(datadir("eclipse.txt"),"w")    do io; writedlm(io, Int.(eclipse_th)); end
+        open(datadir("angles.txt"),"w")     do io; writedlm(io, angles_th); end
+        open(datadir("thrust.txt"),"w")     do io; writedlm(io, thrust_th); end
+        open(datadir("time.txt"),  "w")     do io; writedlm(io, ts); end
+        open(datadir("kept.txt"),  "w")     do io; writedlm(io, kepts); end
+        open(datadir("consts.txt"),"w")     do io; writedlm(io, consts); end
+        open(datadir("sunangles.txt"), "w") do io; writedlm(io, sunangle_th); end
     end
 
     # Compute final kep state

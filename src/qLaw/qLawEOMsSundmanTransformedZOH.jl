@@ -8,7 +8,7 @@ function qLawEOMsSundmanTransformedZOH(u,p,L)
     mee     = SVector(u[1], u[2], u[3], u[4], u[5], L)
 
     # Compute acceleration due to thrust
-    if p.coasting == true
+    if p.coasting == true || p.eclipsed == true
         at  = SVector(0.0, 0.0, 0.0)
         am  = 0.0
     else

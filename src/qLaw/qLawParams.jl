@@ -51,6 +51,12 @@ mutable struct qLawParams{DES}
     toSunVec::Vector{Float64} # Assuming constant for now
     thrustSunAngle::Float64
 
+    # Solar eclipsing
+    eclipsing::Bool
+    eclipsed::Bool
+    RB::Float64 # Radius of central body
+    RS::Float64 # Sun Radius
+
     # Integration parameters
     desolver::DES
     reltol::Float64
@@ -94,6 +100,9 @@ function qLawParams(oe0,oet;
     writeData   = false,
     onlyWriteDataAtSteps = false,
     type        = :QDUC,
+    eclipsing   = false,
+    RB          = 6378.14,
+    RS          = 695500.0,
     thrustSunAngleConstraint = false,
     thrustSunAngle           = 30.0*pi/180.0,
     toSunVec                 = [1.0, 0.0, 0.0])
@@ -144,6 +153,10 @@ function qLawParams(oe0,oet;
     tMax         = spaceCraft.tMax * TU*TU / (1000.0*MU*LU)
     c            = 9.80665*spaceCraft.isp * TU / (1000.0 * LU) 
 
+    # Eclipsing parameters
+    RB          /= LU
+    RS          /= LU
+
     # Set targeting switches if necessary
     if isnothing(Ws)
         Wa          = oeW[1] > 0.0 ? 1 : 0
@@ -161,7 +174,7 @@ function qLawParams(oe0,oet;
     # Construct parameter type
     qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
-        meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,
-        desolver,reltol,abstol,maxRevs,integStep,type,returnData,writeData,
+        meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,eclipsing,
+        false,RB,RS,desolver,reltol,abstol,maxRevs,integStep,type,returnData,writeData,
         onlyWriteDataAtSteps)
 end
