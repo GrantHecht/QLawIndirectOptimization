@@ -48,8 +48,9 @@ mutable struct qLawParams{DES}
 
     # Thrust-to-sun angle constraint
     thrustSunAngleConstraint::Bool
-    toSunVec::Vector{Float64} # Assuming constant for now
+    toSunVec::Vector{Float64}
     thrustSunAngle::Float64
+    panelType::Symbol
 
     # Solar eclipsing
     eclipsing::Bool
@@ -105,7 +106,9 @@ function qLawParams(oe0,oet;
     RS          = 695500.0,
     thrustSunAngleConstraint = false,
     thrustSunAngle           = 30.0*pi/180.0,
-    toSunVec                 = [1.0, 0.0, 0.0])
+    toSunVec                 = [1.0, 0.0, 0.0],
+    panelType   = :dual # options: :dual, thrustdir, antithrustdir
+    )
 
     # Check argument size
     if length(oe0) != 6
@@ -174,7 +177,7 @@ function qLawParams(oe0,oet;
     # Construct parameter type
     qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
-        meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,eclipsing,
+        meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,panelType,eclipsing,
         false,RB,RS,desolver,reltol,abstol,maxRevs,integStep,type,returnData,writeData,
         onlyWriteDataAtSteps)
 end

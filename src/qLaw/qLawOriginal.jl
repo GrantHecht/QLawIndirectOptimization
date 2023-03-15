@@ -16,24 +16,26 @@ function qLawOriginalCost(x, psOG, decVecFlags, cost)
 
     # Run simulation
     J = try
-        meefs, kepfs, retcode = qLawOriginal(ps)
+        meefs, kepfs, tf, retcode = qLawOriginal(ps)
 
         # Compute cost
         J = 0.0
         if cost == :minfuel
             J -= meefs[7]
+        elseif cost == :mintime
+            J += tf 
         end
         if retcode != :success
-            J += 5000.0
+            J += 50000.0
         end
         J
     catch 
-        10000.0
+        1000000.0
     end
     return J
 end
 
-function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = true)
+function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = true, maxTime=1800)
     # Get values of returnTrajAtSteps and writeDataToFile before changing
     returnDataOG    = ps.returnTrajAtSteps
     writeDataOG     = ps.writeDataToFile
@@ -70,7 +72,7 @@ function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = tru
 
     # Optimize
     prob    = Heuristics.Problem(x -> qLawOriginalCost(x, ps, decVecFlags, cost), decVecLBC, decVecUBC)
-    opts    = Heuristics.Options(;display = true, useParallel = useParallel)
+    opts    = Heuristics.Options(;display = true, useParallel = useParallel, maxTime = maxTime)
     pso     = Heuristics.PSO(prob; numParticles = numParticles)
     Heuristics.optimize!(pso, opts)
 
@@ -389,6 +391,6 @@ function qLawOriginal(ps::qLawParams)
     if ps.returnTrajAtSteps
         return (mee_th_steps, kepfs, retcode)
     else
-        return ([x0[1] x0[2] x0[3] x0[4] x0[5] Lf x0[7]], kepfs, retcode)
+        return ([x0[1] x0[2] x0[3] x0[4] x0[5] Lf x0[7]], kepfs, x0[6], retcode)
     end
 end

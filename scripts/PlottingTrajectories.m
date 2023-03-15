@@ -25,7 +25,6 @@ while ~isnan(time(n)) && n ~= length(time)
     n = n + 1;
 end
 
-
 n = n - 1;
 
 % Strip out nans
@@ -120,3 +119,4 @@ end
 
 figure()
 scatter(time,sunangs,".")
+grid on
