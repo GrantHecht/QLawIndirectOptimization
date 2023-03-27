@@ -5,3 +5,4 @@ data/**
 # But don't ignore these
 !**/**_cp.txt
 !**/**_ctd.txt
+!**/**_cdp.txt
