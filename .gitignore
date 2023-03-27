@@ -1,6 +1,7 @@
 # Ignore these files
 Manifest.toml
-data
+data/**
 
 # But don't ignore these
-!**_cp.txt
+!**/**_cp.txt
+!**/**_ctd.txt
