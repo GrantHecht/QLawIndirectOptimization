@@ -38,15 +38,15 @@ kept        = [42165.0, 0.01, 0.01, 0.0, 0.0]
 kep0d        = Vector(kep0)
 kep0d[3:6] .*= 180.0 / pi
 
-
 #oeW         = [1.193, 2.402, 8.999, 0.0, 0.0] 
 
 # Minimum time PSO solution
-oeW         = [1.1137,
-               2.1689,
-               7.9797, 
-               0.0, 0.0]
-ηr          = 0.2183
+oeW         =  [0.6882304380944301,
+                3.3355247191970396,
+                9.188878718549608,
+                0.0,
+                0.0]
+ηr          = 0.3627915323730752
 
 # Define tolerance on targeted elements
 atol        = 20.0
@@ -65,7 +65,7 @@ qLawPs       = qLawParams(kep0d, kept;
                 spaceCraft  = spaceCraft,
                 desolver    = Vern7(),
                 maxRevs     = 800.0,
-                integStep   = 10.0,
+                integStep   = 1.0,
                 writeData   = true,
                 type        = :QDSAA,
                 eSteps      = 10,
@@ -76,5 +76,5 @@ qLawPs       = qLawParams(kep0d, kept;
                 onlyWriteDataAtSteps = true)
 
 # Run QLaw sim
-#tf, kepf, retcode = qLawOriginal(qLawPs)
-tf, kepf, retcode = qLawOriginal(qLawPs, :mintime; maxTime = 5.0*3600.0)
+tf, kepf, retcode = qLawOriginal(qLawPs)
+#tf, kepf, retcode = qLawOriginal(qLawPs, :mintime; maxTime = 5.0*3600.0)

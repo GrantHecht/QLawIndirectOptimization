@@ -72,7 +72,7 @@ function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = tru
 
     # Optimize
     prob    = Heuristics.Problem(x -> qLawOriginalCost(x, ps, decVecFlags, cost), decVecLBC, decVecUBC)
-    opts    = Heuristics.Options(;display = true, useParallel = useParallel, maxTime = maxTime)
+    opts    = Heuristics.Options(;display = true, useParallel = useParallel, maxTime = maxTime, maxStallTime = Inf)
     pso     = Heuristics.PSO(prob; numParticles = numParticles)
     Heuristics.optimize!(pso, opts)
 
