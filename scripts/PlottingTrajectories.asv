@@ -4,8 +4,8 @@ addpath("./scripts/utils/");
 
 % Data name
 %dn      = "cp";
-%dn      = "cdp";
-dn      = "ctd";
+dn      = "cdp";
+%dn      = "ctd";
 
 % Figure folder
 figFolder = "C:\Users\grant\Documents\Projects\Astro-2023-Low-Thrust-Q-Law-Control-With-Sun-Angle-Constraint\Figures\";
@@ -44,6 +44,11 @@ angles  = angles(1:n,:);
 thrust  = thrust(1:n);
 time    = time(1:n,:);
 sunangs = sunangs(1:n,:);
+
+% Print info
+fprintf("TOF:    %1.4f days\n", time(end));
+fprintf("DeltaM: %1.4f kg\n", kep(1,7) - kep(end,7));
+
 
 % Get thrust and coasting arcs
 cart_t = nan(size(cart));
@@ -107,39 +112,71 @@ axis equal
 grid on
 
 figure()
+tiledlayout(3,3)
+
+% X-Y Plot
+nexttile
 plot(cart_t(:,1),cart_t(:,2),"r")
 hold on
 plot(cart_e(:,1),cart_e(:,2),"g")
 plot(cart_c(:,1),cart_c(:,2),"b")
-scatter(cart([1,end],1),cart([1,end],2));
 plotKeplerianOrbit(kept, 360, consts(1))
 
 % Setup axes
 xlabel("x, km", "Interpreter", "Latex")
 ylabel("y, km", "Interpreter", "Latex")
+axis equal
+grid on
 
 % Setup legend
-if dn == "cp"
-    leg1 = legend("Thrusting","Ecclipsed","Location","northwest");
-else
-    leg1 = legend("Thrusting","Ecclipsed","Coasting","Location","northwest");
-end
-set(leg1, "Interpreter", "Latex")
+% if dn == "cp"
+%     leg1 = legend("Thrusting","Ecclipsed","Location","northwest");
+% else
+%     leg1 = legend("Thrusting","Ecclipsed","Coasting","Location","northwest");
+% end
+% set(leg1, "Interpreter", "Latex")
+
+% Publication plotting settings
+set(gca, "fontname", "Times New Roman", "fontsize", 10)
+%if dn == "cp"
+%    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,4,4.5])
+%else
+%    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,3,3.5])
+%end
+%set(gcf, "PaperPositionMode","Manual")
+
+% 3D Plot
+nexttile([2,2])
+
+
+% Print figure
+print(figFolder + "traj_xy_" + dn + ".eps", "-depsc", "-r300")
+
+figure()
+plot(cart_t(:,2),cart_t(:,3),"r")
+hold on
+plot(cart_e(:,2),cart_e(:,3),"g")
+plot(cart_c(:,2),cart_c(:,3),"b")
+%plotKeplerianOrbit(kept, 360, consts(1))
+
+% Setup axes
+xlabel("y, km", "Interpreter", "Latex")
+ylabel("z, km", "Interpreter", "Latex")
 
 axis equal
 grid on
 
 % Publication plotting settings
 set(gca, "fontname", "Times New Roman", "fontsize", 10)
-if dn == "cp"
-    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,4,4.5])
-else
-    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,3,3.5])
-end
+%if dn == "cp"
+    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,4,2])
+%else
+%    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,3,3.5])
+%end
 set(gcf, "PaperPositionMode","Manual")
 
 % Print figure
-print(figFolder + "traj_" + dn + ".eps", "-depsc", "-r300")
+print(figFolder + "traj_yz_" + dn + ".eps", "-depsc", "-r300")
 
 figure()
 tiledlayout(4,1);
@@ -159,7 +196,7 @@ for j = 1:4
     elseif j == 2
         ylabel("e", "Interpreter", "Latex")
         ylim([-0.1, 0.85])
-        yticks([0,0.3,0.6)
+        yticks([0,0.3,0.6])
     elseif j == 3
         ylabel("i, deg", "Interpreter", "Latex")
         ylim([-0.1, 0.55])
@@ -174,11 +211,11 @@ end
 
 % Publication plotting settings
 set(gca, "fontname", "Times New Roman", "fontsize", 10)
-if dn == "cp"
-    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,5.0,4.0])
-else
-    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,3.0,4.0])
-end
+%if dn == "cp"
+    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,6.0,4.0])
+%else
+%    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,3.0,4.0])
+%end
 set(gcf, "PaperPositionMode","Manual")
 
 % Print figure
@@ -189,16 +226,16 @@ scatter(time,sunangs,".")
 xlabel("time, days", "Interpreter", "Latex")
 ylabel("sun angle, deg", "Interpreter", "Latex")
 
-ylim([0,180])
+%ylim([0,180])
 grid on
 
 % Publication plotting settings
 set(gca, "fontname", "Times New Roman", "fontsize", 10)
-if dn == "cp"
-    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,4.0,2.5])
-else
-    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,3.0,2.5])
-end
+%if dn == "cp"
+    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,6.0,2.5])
+%else
+%    set(gcf, "PaperUnits","inches","PaperPosition",[0.25,0.25,3.0,2.5])
+%end
 set(gcf, "PaperPositionMode","Manual")
 
 % Print figure
