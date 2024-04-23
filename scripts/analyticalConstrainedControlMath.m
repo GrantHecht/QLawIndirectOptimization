@@ -17,6 +17,8 @@ d = [0; 0; 1.0 / gamma];
 % ===== Case 1: -a lies outside of or on cone
 u1 = amax*[-a1; -a2; gamma*sqrt(a1^2 + a2^2)] / ...
         sqrt((1+gamma^2)*a1^2 + (1+gamma^2)*a2^2);
+u1t = amax*[-a1; -a2; gamma*sqrt(a1^2 + a2^2)] / ...
+        sqrt((1+gamma^2)*(a1^2 + a2^2));
 
 % Primal feasibility
 pf11    = simplify(norm(u1) - amax)

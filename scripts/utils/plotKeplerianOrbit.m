@@ -1,5 +1,5 @@
 
-function plotKeplerianOrbit(kep, steps, mu)
+function plotKeplerianOrbit(kep, steps,style)
     % Grab orbital elements
     a   = kep(1);
     e   = kep(2);
@@ -14,5 +14,13 @@ function plotKeplerianOrbit(kep, steps, mu)
     ys  = rs .* (cos(ths + aop) .* sin(ran) + sin(ths + aop) .* cos(i) .* cos(ran));
     zs  = rs .* (sin(ths + aop) .* sin(i));
 
-    plot3(xs,ys,zs, "-k")
+    if style == "3D"
+        plot3(xs,ys,zs, "-k")
+    elseif style == "XY"
+        plot(xs,ys,"-k")
+    elseif style == "YZ"
+        plot(ys,zs,"-k")
+    else
+        error("Desired style not implemented.")
+    end
 end

@@ -35,10 +35,10 @@ function qLawOriginalCost(x, psOG, decVecFlags, cost)
     return J
 end
 
-function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = true, maxTime=1800)
+function qLawOriginal(ps::qLawParams, cost; numParticles = 50, maxTime=1800)
     # Get values of returnTrajAtSteps and writeDataToFile before changing
-    returnDataOG    = ps.returnTrajAtSteps
-    writeDataOG     = ps.writeDataToFile
+    returnDataOG         = ps.returnTrajAtSteps
+    writeDataOG          = ps.writeDataToFile
     ps.returnTrajAtSteps = false
     ps.writeDataToFile   = false
 
@@ -71,21 +71,23 @@ function qLawOriginal(ps::qLawParams, cost; numParticles = 50, useParallel = tru
     end
 
     # Optimize
-    prob    = Heuristics.Problem(x -> qLawOriginalCost(x, ps, decVecFlags, cost), decVecLBC, decVecUBC)
-    opts    = Heuristics.Options(;display = true, useParallel = useParallel, maxTime = maxTime, maxStallTime = Inf)
-    pso     = Heuristics.PSO(prob; numParticles = numParticles)
-    Heuristics.optimize!(pso, opts)
+    prob    = GlobalOptimization.OptimizationProblem(x -> qLawOriginalCost(x, ps, decVecFlags, cost), decVecLBC, decVecUBC)
+    #opts    = Heuristics.Options(;display = true, useParallel = useParallel, maxTime = maxTime, maxStallTime = Inf)
+    #pso     = Heuristics.PSO(prob; numParticles = numParticles)
+    #Heuristics.optimize!(pso, opts)
+    pso     = GlobalOptimization.ThreadedPSO(prob; max_time = maxTime, num_particles = numParticles, max_stall_time = Inf, display = Val{true}())
+    res     = GlobalOptimization.optimize!(pso)
 
     # Reset parameters, simulate, and return
     idx = 1
     for i in eachindex(ps.oeW)
         if decVecFlags[i] == true
-            ps.oeW[i] = pso.results.xbest[idx]
+            ps.oeW[i] = res.xbest[idx]
             idx += 1
         end
     end
     if decVecFlags[6] == true
-        ps.ηr = pso.results.xbest[end]
+        ps.ηr = res.xbest[end]
     end
     ps.returnTrajAtSteps = returnDataOG
     ps.writeDataToFile   = writeDataOG
@@ -153,13 +155,8 @@ function qLawOriginal(ps::qLawParams)
         mee     = SVector(x0[1], x0[2], x0[3], x0[4], x0[5], L0)
 
         # Compute keplerian state
-        kep,f   = AstroUtils.convertState(mee, AstroUtils.MEE,
+        kep     = AstroUtils.convertState(mee, AstroUtils.MEE,
                     AstroUtils.Keplerian, ps.μ)
-        if f != 0
-            retcode = :keplerian_singularity
-            break
-        end
-
 
         # If using sun angle constraint or eclipsing with sun ephemeride, compute to sun direction
         ps.eclipsed = false
@@ -201,7 +198,7 @@ function qLawOriginal(ps::qLawParams)
         ps.coasting = coast
 
         # Perform numerical integration
-        prob    = ODEProblem(qLawEOMsSundmanTransformedZOH, x0, (L0,Lf), ps)
+        prob    = ODEProblem{false,SciMLBase.FullSpecialize}(qLawEOMsSundmanTransformedZOH, x0, (L0,Lf), ps)
         sol     = solve(prob, ps.desolver, reltol = ps.reltol, abstol = ps.abstol)
 
         # Save info if desired
@@ -369,7 +366,7 @@ function qLawOriginal(ps::qLawParams)
 
     # Compute final kep state
     mee     = SVector(x0[1], x0[2], x0[3], x0[4], x0[5], Lf)
-    kepf,f  = AstroUtils.convertState(mee, AstroUtils.MEE,
+    kepf    = AstroUtils.convertState(mee, AstroUtils.MEE,
                 AstroUtils.Keplerian, ps.μ)
     kepfs   = SVector(kepf[1] * ps.meePs.LU, kepf[2], kepf[3] * 180.0 / pi,
                 kepf[4] * 180.0 / pi, kepf[5] * 180.0 / pi, kepf[6] * 180.0 / pi,

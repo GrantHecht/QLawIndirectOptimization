@@ -1,5 +1,5 @@
 # Define some qlaw parameters
-mutable struct qLawParams{DES}
+mutable struct qLawParams{DPT <: AstroEOMs.MEEParams, DES}
     # Initial orbital elements
     oe0::Vector{Float64}
 
@@ -43,7 +43,7 @@ mutable struct qLawParams{DES}
     coasting::Bool
 
     # Parameters for the dynamics
-    meePs::MEEParams
+    meePs::DPT
     scPs::SimpleSpacecraft
 
     # Thrust-to-sun angle constraint
@@ -77,38 +77,38 @@ mutable struct qLawParams{DES}
 end
 
 function qLawParams(oe0,oet;
-    oeW         = [1.0, 1.0, 1.0, 0.0, 0.0],
-    oeTols      = [10.0, 0.001, 0.01, 0.01, 0.01],
-    Ws          = nothing,
-    rpmin       = 6578.0,
-    k           = 100.0,
-    Wp          = 0.0,
-    b_petro     = 0.01,
-    m_petro     = 3.0,
-    n_petro     = 4.0,
-    r_petro     = 2.0,
-    ηr_tol      = 0.0,
-    ηa_tol      = 0.0,
-    eSteps      = 60,
-    meeParams   = MEEParams(0.0, LU = 1.0, MU = 1.0, TU = 1.0),
-    spaceCraft  = SimpleSpacecraft(3000.0, 2500.0, 1.0, 3000.0),
-    desolver    = Vern9(),
-    reltol      = 1e-10,
-    abstol      = 1e-10,
-    maxRevs     = 100.0,
-    integStep   = 5.0,
-    returnData  = false,
-    writeData   = false,
+    oeW             = [1.0, 1.0, 1.0, 0.0, 0.0],
+    oeTols          = [10.0, 0.001, 0.01, 0.01, 0.01],
+    Ws              = nothing,
+    rpmin           = 6578.0,
+    k               = 100.0,
+    Wp              = 0.0,
+    b_petro         = 0.01,
+    m_petro         = 3.0,
+    n_petro         = 4.0,
+    r_petro         = 2.0,
+    ηr_tol          = 0.0,
+    ηa_tol          = 0.0,
+    eSteps          = 60,
+    meeParams::DPT  = MEEParams(0.0, LU = 1.0, MU = 1.0, TU = 1.0),
+    spaceCraft      = SimpleSpacecraft(3000.0, 2500.0, 1.0, 3000.0),
+    desolver::DES   = Vern9(),
+    reltol          = 1e-10,
+    abstol          = 1e-10,
+    maxRevs         = 100.0,
+    integStep       = 5.0,
+    returnData      = false,
+    writeData       = false,
     onlyWriteDataAtSteps = false,
-    type        = :QDUC,
-    eclipsing   = false,
-    RB          = 6378.14,
-    RS          = 695500.0,
+    type            = :QDUC,
+    eclipsing       = false,
+    RB              = 6378.14,
+    RS              = 695500.0,
     thrustSunAngleConstraint = false,
     thrustSunAngle           = 30.0*pi/180.0,
     toSunVec                 = [1.0, 0.0, 0.0],
-    panelType   = :dual # options: :dual, thrustdir, antithrustdir
-    )
+    panelType       = :dual # options: :dual, thrustdir, antithrustdir
+    ) where {DPT,DES}
 
     # Check argument size
     if length(oe0) != 6
@@ -175,7 +175,7 @@ function qLawParams(oe0,oet;
     toSunVec ./= mag
 
     # Construct parameter type
-    qLawParams(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
+    qLawParams{DPT,DES}(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
         meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,panelType,eclipsing,
         false,RB,RS,desolver,reltol,abstol,maxRevs,integStep,type,returnData,writeData,

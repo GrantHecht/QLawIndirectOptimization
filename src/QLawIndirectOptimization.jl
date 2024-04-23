@@ -6,7 +6,7 @@ using StaticArrays
 using AstroUtils, AstroEOMs
 using DelimitedFiles
 using DifferentialEquations
-using DiffEqSensitivity
+#using DiffEqSensitivity
 using DrWatson
 using LinearAlgebra
 using Zygote
@@ -15,8 +15,10 @@ using NLsolve
 using ForwardDiff
 using DiffResults
 using Interpolations
+using GLMakie
 import Convex, SCS, COSMO
 import Heuristics
+import GlobalOptimization
 const MOI = Convex.MOI
 
 # Define some functions for easy use of 
@@ -39,6 +41,8 @@ include("./qLaw/qLawSolvers/steepestDescentControl.jl")
 include("./qLaw/qLawEOMsSundmanTransformedZOH.jl")
 include("./qLaw/qLawOriginal.jl")
 include("./qLaw/qLawThrust_Keplerian.jl")
+include("./qLaw/qLaw_transfer_cache.jl")
+include("./qLaw/qLaw_transfer_generation.jl")
 
 # Include indirect optimization source code
 include("./indirectOptimization/memfNonlinearFunction.jl")
@@ -54,6 +58,8 @@ include("./indirectOptimization/ACT/adjointControlTransformation.jl")
 export qLawParams, qLawThrustAngles, dQn, qLawCoastContinuousCallbackCheck
 export qLawOriginal
 export qLawThrust_Keplerian
+export generate_qlaw_transfer
+export plot_transfer
 export memfSolve, minFuelMayerSolve
 export adjointControlTransformation
 export FinalStateInterpolant, getFinalStateAndTime

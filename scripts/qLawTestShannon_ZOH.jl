@@ -6,6 +6,7 @@ using DifferentialEquations, DiffEqCallbacks, Plots
 using DelimitedFiles
 using QLawIndirectOptimization
 using Heuristics
+using Infiltrator
 furnshDefaults()
 
 # Compute initial epoch
@@ -31,12 +32,14 @@ spaceCraft  = SimpleSpacecraft(m0, m0, tMax, Isp)
 
 # Define initial and target orbital elements
 mee0        = SVector(11359.07, 0.7306, 0.0, 0.2539676, 0.0, 0.0)
-kep0, f     = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Keplerian, μs)
+kep0        = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Keplerian, μs)
+@infiltrate
 kept        = [42165.0, 0.01, 0.01, 0.0, 0.0]
 
 # Convert angles in initial kep state to deg
-kep0d        = Vector(kep0)
-kep0d[3:6] .*= 180.0 / pi
+kep0d       = zeros(6)
+kep0d[1:2] .= @view(kep0[1:2])
+kep0d[3:6] .= @view(kep0[3:6]) * 180.0 / pi
 
 # Minimum time PSO solution
 oeW         = [2.0777701118734324,

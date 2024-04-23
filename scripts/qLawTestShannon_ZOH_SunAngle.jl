@@ -6,6 +6,7 @@ using DifferentialEquations, DiffEqCallbacks, Plots
 using DelimitedFiles
 using QLawIndirectOptimization
 using Heuristics
+using BenchmarkTools
 furnshDefaults()
 
 # Compute initial epoch
@@ -25,17 +26,22 @@ ephemDays   = 1000.0
 ephemTspan  = (initEpoch - 100.0, initEpoch + ephemDays*86400.0)
 nPoints     = ceil(Int64, 2*ephemDays)
 tbEphems    = Ephemerides(ephemTspan, nPoints, [10,301], 399, "J2000")
-meeParams   = MEEParams(initEpoch; LU = 384400.0, MU = 1.0, TU = 24.0*3600.0, μ = μs,
-                        thirdBodyEphemerides = tbEphems, nonsphericalGravity = true)
+meeParams   = MEEParams(
+    initEpoch; 
+    LU = 384400.0, MU = 1.0, TU = 24.0*3600.0, 
+    μ = μs,
+    thirdBodyEphemerides = tbEphems, 
+    nonsphericalGravity = true,
+)
 spaceCraft  = SimpleSpacecraft(m0, m0, tMax, Isp)
 
 # Define initial and target orbital elements
 mee0        = SVector(11359.07, 0.7306, 0.0, 0.2539676, 0.0, 0.0)
-kep0, f     = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Keplerian, μs)
+kep0        = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Keplerian, μs)
 kept        = [42165.0, 0.01, 0.01, 0.0, 0.0]
 
 # Convert angles in initial kep state to deg
-kep0d        = Vector(kep0)
+kep0d        = Vector{Float64}(kep0)
 kep0d[3:6] .*= 180.0 / pi
 
 # Define error weights
@@ -60,7 +66,7 @@ kep0d[3:6] .*= 180.0 / pi
 oeW         = [3.6648209940624583,
                1.601742021805308,
                9.893525941369818, 0.0, 0.0]
-ηr          = 0.0
+ηr          = 0.2
 
 # Define tolerance on targeted elements
 atol        = 20.0
@@ -89,5 +95,24 @@ qLawPs       = qLawParams(kep0d, kept;
                 onlyWriteDataAtSteps = true)
 
 # Run QLaw sim
-meefs, kepfus, tf, retcode = qLawOriginal(qLawPs)
+#meefs, kepfus, tf, retcode = qLawOriginal(qLawPs)
+
+#meefs_fast, kepfus_fast, tf_fast, retcode_fast = generate_qlaw_transfer(qLawPs)
+
+#cache = QLawIndirectOptimization.QLawTransferCache()
+#meefs_fast, kepfus_fast, tf_fast, retcode_fast = generate_qlaw_transfer(qLawPs, cache)
+
 #tf, kepf, retcode = qLawOriginal(qLawPs, :mintime; maxTime = 5.0*3600.0)
+
+# Define cost
+function cost(state, time, retcode)
+    J = time - 0.1*state[7]
+    if retcode != :success
+        J += 5000.0
+    end
+    return J
+end
+
+# Solve
+cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs, cost; max_time = 120.0, show_trace = true, num_particles = 50)
+fig = plot_transfer(cache, qLawPs)

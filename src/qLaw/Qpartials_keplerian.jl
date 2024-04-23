@@ -85,10 +85,16 @@ function Qpartials_keplerian(sma, e, inc, ran, ape, m, ps::qLawParams)
     t46 = inc+t28;
 
     #t47 = ran+t30;
-	if (fmod(ran, 2.0*pi) > fmod(ran_t, 2.0*pi))
-		t47 = fmod(ran - ran_t, 2.0*pi) >  1.0e-6 ? fmod(ran - ran_t, 2.0*pi) :  1.0e-6;
-	else
-		t47 = fmod(ran - ran_t, 2.0*pi) < -1.0e-6 ? fmod(ran - ran_t, 2.0*pi) : -1.0e-6;
+	# if (fmod(ran, 2.0*pi) > fmod(ran_t, 2.0*pi))
+	# 	t47 = fmod(ran - ran_t, 2.0*pi) >  1.0e-6 ? fmod(ran - ran_t, 2.0*pi) :  1.0e-6;
+	# else
+	# 	t47 = fmod(ran - ran_t, 2.0*pi) < -1.0e-6 ? fmod(ran - ran_t, 2.0*pi) : -1.0e-6;
+    # end
+    val = ran - ran_t
+    t47 = acos(cos(val))
+    if abs(t47) < 1e-6
+        dir = t47 == 0.0 ? 1.0 : sign(t47)
+        t47 = dir * 1e-6
     end
 
     t48 = sma+t33;
