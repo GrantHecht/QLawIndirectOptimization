@@ -2,12 +2,8 @@ using DrWatson
 @quickactivate "QLawIndirectOptimization"
 
 using AstroEOMs, AstroUtils, SPICE, StaticArrays
-using DifferentialEquations, DiffEqCallbacks, Plots
-using DelimitedFiles
+using DifferentialEquations
 using QLawIndirectOptimization
-using Heuristics
-using BenchmarkTools
-using Infiltrator
 furnshDefaults()
 
 # Compute initial epoch

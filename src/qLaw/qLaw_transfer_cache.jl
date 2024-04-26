@@ -129,21 +129,6 @@ function push_update!(cache::QLawTransferCache, de_sol, α, β, thrust, eclipse_
     push!(cache.state_at_steps, de_sol.u[end])
 end
 
-function plot_transfer_gl(cache::QLawTransferCache, ps::qLawParams)
-    fig = GM.Figure();
-    ax = GM.Axis3(fig[1, 1], aspect = :data)
-    xs = zeros(length(cache.times))
-    ys = zeros(length(cache.times))
-    zs = zeros(length(cache.times))
-    for i in eachindex(cache.times)
-        cart = cache.states[i]
-        xs[i] = cart[1]
-        ys[i] = cart[2]
-        zs[i] = cart[3]
-    end
-    GM.lines!(ax, xs, ys, zs)
-    return fig
-end
 
 function plot_transfer(
     cache::QLawTransferCache, ps::qLawParams;
