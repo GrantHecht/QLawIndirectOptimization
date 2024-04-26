@@ -15,11 +15,15 @@ using NLsolve
 using ForwardDiff
 using DiffResults
 using Interpolations
-using GLMakie
+import MAT
 import Convex, SCS, COSMO
 import Heuristics
 import GlobalOptimization
 const MOI = Convex.MOI
+
+# Plotting
+import GLMakie as GM
+import CairoMakie as CM
 
 # Define some functions for easy use of 
 # c generated code
@@ -29,7 +33,7 @@ fmod(a,b)   = mod(a,b)
 
 # Include qlaw source code
 include("./qLaw/qLawParams.jl")
-include("./qLaw/qLawThrustAngles.jl")
+#include("./qLaw/qLawThrustAngles.jl")
 include("./qLaw/dQn.jl")
 include("./qLaw/Qpartials_keplerian.jl")
 include("./qLaw/gaussVarKeplerian.jl")
@@ -59,11 +63,12 @@ export qLawParams, qLawThrustAngles, dQn, qLawCoastContinuousCallbackCheck
 export qLawOriginal
 export qLawThrust_Keplerian
 export generate_qlaw_transfer
-export plot_transfer
+export plot_transfer, plot_transfer_gl
 export memfSolve, minFuelMayerSolve
 export adjointControlTransformation
 export FinalStateInterpolant, getFinalStateAndTime
 export minFuelMayerPseudoarclengthNonlinearFunction!
 export pcContinuation
+export dump_to_mat
 
 end

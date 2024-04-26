@@ -63,7 +63,8 @@ mutable struct qLawParams{DPT <: AstroEOMs.MEEParams, DES}
     reltol::Float64
     abstol::Float64
     maxRevs::Float64
-    integStep::Float64
+    integStepOptimization::Float64
+    integStepGeneration::Float64
 
     # QLaw type
     type::Symbol
@@ -72,38 +73,41 @@ mutable struct qLawParams{DPT <: AstroEOMs.MEEParams, DES}
     returnTrajAtSteps::Bool
 
     # Storage info (Switch to type flag in future)
+    savedStatesAtSteps::Int
     writeDataToFile::Bool
     writeDataOnlyAtSteps::Bool
 end
 
 function qLawParams(oe0,oet;
-    oeW             = [1.0, 1.0, 1.0, 0.0, 0.0],
-    oeTols          = [10.0, 0.001, 0.01, 0.01, 0.01],
-    Ws              = nothing,
-    rpmin           = 6578.0,
-    k               = 100.0,
-    Wp              = 0.0,
-    b_petro         = 0.01,
-    m_petro         = 3.0,
-    n_petro         = 4.0,
-    r_petro         = 2.0,
-    ηr_tol          = 0.0,
-    ηa_tol          = 0.0,
-    eSteps          = 60,
-    meeParams::DPT  = MEEParams(0.0, LU = 1.0, MU = 1.0, TU = 1.0),
-    spaceCraft      = SimpleSpacecraft(3000.0, 2500.0, 1.0, 3000.0),
-    desolver::DES   = Vern9(),
-    reltol          = 1e-10,
-    abstol          = 1e-10,
-    maxRevs         = 100.0,
-    integStep       = 5.0,
-    returnData      = false,
-    writeData       = false,
-    onlyWriteDataAtSteps = false,
-    type            = :QDUC,
-    eclipsing       = false,
-    RB              = 6378.14,
-    RS              = 695500.0,
+    oeW                     = [1.0, 1.0, 1.0, 0.0, 0.0],
+    oeTols                  = [10.0, 0.001, 0.01, 0.01, 0.01],
+    Ws                      = nothing,
+    rpmin                   = 6578.0,
+    k                       = 100.0,
+    Wp                      = 0.0,
+    b_petro                 = 0.01,
+    m_petro                 = 3.0,
+    n_petro                 = 4.0,
+    r_petro                 = 2.0,
+    ηr_tol                  = 0.0,
+    ηa_tol                  = 0.0,
+    eSteps                  = 60,
+    meeParams::DPT          = MEEParams(0.0, LU = 1.0, MU = 1.0, TU = 1.0),
+    spaceCraft              = SimpleSpacecraft(3000.0, 2500.0, 1.0, 3000.0),
+    desolver::DES           = Vern9(),
+    reltol                  = 1e-10,
+    abstol                  = 1e-10,
+    maxRevs                 = 100.0,
+    integStepOpt            = 5.0,
+    integStepGen            = 0.1,
+    returnData              = false,
+    writeData               = false,
+    onlyWriteDataAtSteps    = false,
+    savedStatesAtSteps      = 10,
+    type                    = :QDUC,
+    eclipsing               = false,
+    RB                      = 6378.14,
+    RS                      = 695500.0,
     thrustSunAngleConstraint = false,
     thrustSunAngle           = 30.0*pi/180.0,
     toSunVec                 = [1.0, 0.0, 0.0],
@@ -148,7 +152,8 @@ function qLawParams(oe0,oet;
     # Other parameters
     rpmin       /= LU
     μ            = AstroEOMs.getScaledGravityParameter(meeParams)
-    integStep   *= d2r
+    integStepOpt *= d2r
+    integStepGen *= d2r
 
     # Spacecraft parameters
     m0           = spaceCraft.initMass / MU
@@ -178,6 +183,6 @@ function qLawParams(oe0,oet;
     qLawParams{DPT,DES}(oe0,oet,oeW,oeTols,Ws,Wp,rpmin,k,ηr_tol,ηa_tol,eSteps,
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
         meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,panelType,eclipsing,
-        false,RB,RS,desolver,reltol,abstol,maxRevs,integStep,type,returnData,writeData,
-        onlyWriteDataAtSteps)
+        false,RB,RS,desolver,reltol,abstol,maxRevs,integStepOpt,integStepGen,type,returnData,
+        savedStatesAtSteps,writeData,onlyWriteDataAtSteps)
 end

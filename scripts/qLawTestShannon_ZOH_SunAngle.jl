@@ -7,6 +7,7 @@ using DelimitedFiles
 using QLawIndirectOptimization
 using Heuristics
 using BenchmarkTools
+using Infiltrator
 furnshDefaults()
 
 # Compute initial epoch
@@ -77,22 +78,26 @@ itol        = 0.01
 tolVec      = [atol,etol,itol,Ωtol,ωtol]
 
 # Construct qLaw parameters
-qLawPs       = qLawParams(kep0d, kept;
-                oeW         = oeW,
-                oeTols      = tolVec,
-                ηr_tol      = ηr,
-                meeParams   = meeParams,
-                spaceCraft  = spaceCraft,
-                desolver    = Vern7(),
-                maxRevs     = 800.0,
-                integStep   = 1.0,
-                writeData   = true,
-                type        = :QDSAA,
-                eSteps      = 10,
-                eclipsing   = true,
-                thrustSunAngleConstraint = true,
-                thrustSunAngle = 50.0*pi/180.0,
-                onlyWriteDataAtSteps = true)
+qLawPs       = qLawParams(
+    kep0d, kept;
+    oeW                      = oeW,
+    oeTols                   = tolVec,
+    ηr_tol                   = 0.1,
+    meeParams                = meeParams,
+    spaceCraft               = spaceCraft,
+    desolver                 = Vern7(),
+    maxRevs                  = 800.0,
+    integStepOpt             = 10.0,
+    integStepGen             = 0.1,
+    writeData                = true,
+    type                     = :QDSAA,
+    eSteps                   = 10,
+    eclipsing                = true,
+    thrustSunAngleConstraint = true,
+    thrustSunAngle           = 50.0*pi/180.0,
+    onlyWriteDataAtSteps     = true,
+    savedStatesAtSteps       = 10,
+)
 
 # Run QLaw sim
 #meefs, kepfus, tf, retcode = qLawOriginal(qLawPs)
@@ -106,7 +111,7 @@ qLawPs       = qLawParams(kep0d, kept;
 
 # Define cost
 function cost(state, time, retcode)
-    J = time - 0.1*state[7]
+    J = time - 5*state[7]
     if retcode != :success
         J += 5000.0
     end
@@ -114,5 +119,10 @@ function cost(state, time, retcode)
 end
 
 # Solve
-cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs, cost; max_time = 120.0, show_trace = true, num_particles = 50)
+cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+    qLawPs, cost; 
+    max_time        = 60.0, 
+    show_trace      = true, 
+    num_particles   = 50,
+)
 fig = plot_transfer(cache, qLawPs)

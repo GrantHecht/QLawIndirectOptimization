@@ -1,30 +1,31 @@
 
+# Updates the sun location within qLawParams and checks if in eclipse
 function update_sun_location!(ps::qLawParams, mee, t)
     ps.eclipsed = false
     if ps.meePs.thirdBodyEphemerides !== nothing && 10 in ps.meePs.thirdBodyEphemerides.targIDs
         # Get position of sun
-        rs  = AstroUtils.getPosition(ps.meePs.thirdBodyEphemerides, 10, ps.meePs.initEpoch + t*ps.meePs.TU)
+        r_sun = AstroUtils.getPosition(ps.meePs.thirdBodyEphemerides, 10, ps.meePs.initEpoch + t*ps.meePs.TU)
 
         # Get position of spacecraft
         cart_us = AstroUtils.convertState(mee, AstroUtils.MEE, AstroUtils.Cartesian, ps.μ)
-        rsc     = SA[cart_us[1], cart_us[2], cart_us[3]]
+        r_sc = SA[cart_us[1], cart_us[2], cart_us[3]]
 
         # Get vector from spacecraft to sun
-        rssc    = SA[
-            rs[1] / ps.meePs.LU - rsc[1],
-            rs[2] / ps.meePs.LU - rsc[2],
-            rs[3] / ps.meePs.LU - rsc[3],
+        r_sun_sc = SA[
+            r_sun[1] / ps.meePs.LU - r_sc[1],
+            r_sun[2] / ps.meePs.LU - r_sc[2],
+            r_sun[3] / ps.meePs.LU - r_sc[3],
         ]
 
         # Compute scale to unit vector and set
-        nrssc           = norm(rssc)
-        ps.toSunVec    .= rssc / nrssc
+        n_r_sun_sc = norm(r_sun_sc)
+        ps.toSunVec .= r_sun_sc / n_r_sun_sc
 
         # Check if in eclipse
-        nrsc            = norm(rsc)
-        aSR             = asin(ps.RS / nrssc)
-        aBR             = asin(ps.RB / nrsc)
-        aD              = acos(-dot(rsc,rssc) / (nrsc*nrssc))
+        n_r_sc          = norm(r_sc)
+        aSR             = asin(ps.RS / n_r_sun_sc)
+        aBR             = asin(ps.RB / n_r_sc)
+        aD              = acos(-dot(r_sc,r_sun_sc) / (n_r_sc*n_r_sun_sc))
         if ps.eclipsing && aSR + aBR > aD
             ps.eclipsed = true
         end
@@ -32,6 +33,7 @@ function update_sun_location!(ps::qLawParams, mee, t)
     return nothing
 end
 
+# Computes the error in targeting the desired Keplerian elements
 function get_targeting_error(kep, ps)
     aerr = ps.Ws[1]*abs(kep[1] - ps.oet[1]) - ps.oeTols[1]
     eerr = ps.Ws[2]*abs(kep[2] - ps.oet[2]) - ps.oeTols[2]
@@ -41,6 +43,7 @@ function get_targeting_error(kep, ps)
     return (aerr, eerr, ierr, Ωerr, ωerr)
 end
 
+# Checks if we've hit any criteria indicating we should stop the sim
 function check_stop_criteria(mee, m, error, ps, Lspan)
     if mee[6] >= Lspan[2]
         return :hit_max_L, true
@@ -53,16 +56,18 @@ function check_stop_criteria(mee, m, error, ps, Lspan)
     end
 end
 
+# Performs a single integration step of the qLaw transfer, holding the control constant
+# and does not employ a cache (i.e., we don't save any information)
 function take_integration_step!(ps, mee, mass, time, L0, Lf, sa_constrained, cache::Nothing)
     # Update sun location
     update_sun_location!(ps, mee, time)
     
     # Compute qLaw control
-    α, β, T, e_coast, pq_coast = qLawThrust_Keplerian_fast(mee, mass, sa_constrained, ps)
+    α, β, T, e_coast, pq_coast = qLaw_control_with_coast_checks(mee, mass, sa_constrained, ps)
 
     # Perform numerical integration
     x0 = SA[mee[1], mee[2], mee[3], mee[4], mee[5], time, mass]
-    pt = (α, β, T, ps.c, e_coast || pq_coast)
+    pt = (α, β, T, ps.c, e_coast || pq_coast || ps.eclipsed)
     fn = (u,p,L) -> qLawEOMsSundmanTransformedZOH(u,p,L,ps.meePs)
     sol = solve(
         ODEProblem{false,SciMLBase.FullSpecialize}(fn, x0, (L0,Lf), pt),
@@ -81,16 +86,18 @@ function take_integration_step!(ps, mee, mass, time, L0, Lf, sa_constrained, cac
     return meef, xf[7], xf[6]
 end
 
+# Performs a single integration step of the qLaw transfer, holding the control constant
+# and does not employ a cache (i.e., we don't save any information)
 function take_integration_step!(ps, mee, mass, time, L0, Lf, sa_constrained, cache::QLawTransferCache)
     # Update sun location
     update_sun_location!(ps, mee, time)
     
     # Compute qLaw control
-    α, β, T, e_coast, pq_coast = qLawThrust_Keplerian_fast(mee, mass, sa_constrained, ps)
+    α, β, T, eff_coast, pq_coast = qLaw_control_with_coast_checks(mee, mass, sa_constrained, ps)
 
     # Perform numerical integration
     x0 = SA[mee[1], mee[2], mee[3], mee[4], mee[5], time, mass]
-    pt = (α, β, T, ps.c, e_coast || pq_coast)
+    pt = (α, β, T, ps.c, eff_coast || pq_coast || ps.eclipsed)
     fn = (u,p,L) -> qLawEOMsSundmanTransformedZOH(u,p,L,ps.meePs)
     sol = solve(
         ODEProblem{false,SciMLBase.FullSpecialize}(fn, x0, (L0,Lf), pt),
@@ -100,7 +107,7 @@ function take_integration_step!(ps, mee, mass, time, L0, Lf, sa_constrained, cac
     )
 
     # Push update to cache
-    push_update!(cache, sol, α, β, T, e_coast, pq_coast, ps)
+    push_update!(cache, sol, α, β, T, ps.eclipsed, eff_coast, pq_coast, ps)
 
     # Form mee state at end of integration
     xf   = sol.u[end]
@@ -124,11 +131,14 @@ function generate_qlaw_transfer(ps::qLawParams, cache::Union{Nothing,QLawTransfe
     # Check if enforcing sa constraint
     sa_con = ps.type != :QDUC
 
+    # Handle step size
+    integStep = cache === nothing ? ps.integStepOptimization : ps.integStepGeneration
+
     # Begin integration loop
     done    = false
     retcode = :continue
     L0      = Lspan[1]
-    Lf      = L0 + ps.integStep
+    Lf      = L0 + integStep
     while !done
         mee, mass, time = take_integration_step!(ps, mee, mass, time, L0, Lf, sa_con, cache)
 
@@ -143,7 +153,7 @@ function generate_qlaw_transfer(ps::qLawParams, cache::Union{Nothing,QLawTransfe
 
         # Update integration span variables
         L0  = Lf 
-        Lf  = L0 + ps.integStep
+        Lf  = L0 + integStep
     end
 
     # Compute final kep state
@@ -163,7 +173,7 @@ function generate_qlaw_transfer(ps::qLawParams, cache::Union{Nothing,QLawTransfe
 end
 
 function generate_qlaw_transfer(ps::qLawParams)
-    cache = QLawTransferCache()
+    cache = QLawTransferCache(ps.oeW, ps.ηr)
     meef, kepf, time, retcode = generate_qlaw_transfer(ps, cache)
     return cache, meef, kepf, time, retcode
 end
@@ -171,7 +181,12 @@ end
 # Function must be of the form:
 #   weight_optimization_cost(final_state, final_time, retcode)
 #
-function generate_qlaw_transfer(ps::qLawParams, weight_optimization_cost::F; max_time = 60.0, num_particles = 200, show_trace = false) where F <: Function
+function generate_qlaw_transfer(
+    ps::qLawParams, weight_optimization_cost::F; 
+    max_time = 60.0, 
+    num_particles = 200, 
+    show_trace = false,
+) where F <: Function
     # Determine decision variables
     dec_vec_flags = get_decision_variable_flags(ps)
     n = sum(dec_vec_flags)
@@ -179,6 +194,9 @@ function generate_qlaw_transfer(ps::qLawParams, weight_optimization_cost::F; max
     # Define optimization problem
     LB = fill(0.0, n)
     UB = fill(10.0, n)
+    if dec_vec_flags[end]
+        UB[end] = 1.0
+    end
     prob = GlobalOptimization.OptimizationProblem(
         x -> qlaw_weight_optimization_cost(x, dec_vec_flags, ps, weight_optimization_cost),
         LB, UB
@@ -210,7 +228,7 @@ function qlaw_weight_optimization_cost(dec_vec, dec_vec_flags, ps_original, cost
         mee, kepfs, time, retcode = generate_qlaw_transfer(ps, nothing)
 
         # Call the user provided cost function
-        J = cost(mee, time, retcode)
+        cost(mee, time, retcode)
     catch e
         if e isa InterruptException
             throw(e)
