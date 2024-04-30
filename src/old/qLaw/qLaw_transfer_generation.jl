@@ -201,7 +201,7 @@ function generate_qlaw_transfer(
         x -> qlaw_weight_optimization_cost(x, dec_vec_flags, ps, weight_optimization_cost),
         LB, UB
     )
-    pso = GlobalOptimization.ThreadedPSO(
+    pso = GlobalOptimization.PolyesterPSO(
         prob; 
         max_time = max_time, 
         num_particles = num_particles, 

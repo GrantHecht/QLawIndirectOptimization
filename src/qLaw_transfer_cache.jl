@@ -142,6 +142,16 @@ function plot_transfer(
     end
 end
 
+function plot_transfer(
+    file::String, cache::QLawTransferCache, ps::qLawParams;
+    axes = SA[1,2],
+    show_coast = true,
+)
+    fig = plot_transfer(cache, ps; axes = axes, show_coast = show_coast)
+    CM.save(file, fig)
+    return nothing
+end
+
 
 function plot_transfer_with_coasts(
     cache::QLawTransferCache, ps::qLawParams, axes
@@ -171,6 +181,9 @@ end
 function get_thrust_and_coast_arcs(
     cache::QLawTransferCache, ps::qLawParams, axes
 )
+    # Get distance unit
+    DU = ps.meePs.LU
+
     n = length(cache.times)
     first_axis_thrust_arcs  = Vector{Float32}(undef, n)
     second_axis_thrust_arcs  = Vector{Float32}(undef, n)
@@ -183,8 +196,8 @@ function get_thrust_and_coast_arcs(
     @inbounds for i in eachindex(cache.times)
         coast = cache.coast_eclipse[i] || cache.coast_effectives[i] || cache.coast_positive_dQs[i]
         if !coast
-            first_axis_thrust_arcs[i] = cache.states[i][axes[1]]
-            second_axis_thrust_arcs[i] = cache.states[i][axes[2]]
+            first_axis_thrust_arcs[i] = DU*cache.states[i][axes[1]]
+            second_axis_thrust_arcs[i] = DU*cache.states[i][axes[2]]
             first_axis_eff_coast_arcs[i] = NaN
             second_axis_eff_coast_arcs[i] = NaN
             first_axis_posqd_coast_arcs[i] = NaN
@@ -199,13 +212,13 @@ function get_thrust_and_coast_arcs(
                 second_axis_eff_coast_arcs[i] = NaN
                 first_axis_posqd_coast_arcs[i] = NaN
                 second_axis_posqd_coast_arcs[i] = NaN
-                first_axis_eclipse_coast_arcs[i] = cache.states[i][axes[1]]
-                second_axis_eclipse_coast_arcs[i] = cache.states[i][axes[2]]
+                first_axis_eclipse_coast_arcs[i] = DU*cache.states[i][axes[1]]
+                second_axis_eclipse_coast_arcs[i] = DU*cache.states[i][axes[2]]
             elseif cache.coast_effectives[i]
                 first_axis_thrust_arcs[i] = NaN
                 second_axis_thrust_arcs[i] = NaN
-                first_axis_eff_coast_arcs[i] = cache.states[i][axes[1]]
-                second_axis_eff_coast_arcs[i] = cache.states[i][axes[2]]
+                first_axis_eff_coast_arcs[i] = DU*cache.states[i][axes[1]]
+                second_axis_eff_coast_arcs[i] = DU*cache.states[i][axes[2]]
                 first_axis_posqd_coast_arcs[i] = NaN
                 second_axis_posqd_coast_arcs[i] = NaN
                 first_axis_eclipse_coast_arcs[i] = NaN
@@ -215,19 +228,19 @@ function get_thrust_and_coast_arcs(
                 second_axis_thrust_arcs[i] = NaN
                 first_axis_eff_coast_arcs[i] = NaN
                 second_axis_eff_coast_arcs[i] = NaN
-                first_axis_posqd_coast_arcs[i] = cache.states[i][axes[1]]
-                second_axis_posqd_coast_arcs[i] = cache.states[i][axes[2]]
+                first_axis_posqd_coast_arcs[i] = DU*cache.states[i][axes[1]]
+                second_axis_posqd_coast_arcs[i] = DU*cache.states[i][axes[2]]
                 first_axis_eclipse_coast_arcs[i] = NaN
                 second_axis_eclipse_coast_arcs[i] = NaN
             end
         end
     end
     return (
-        first_axis_thrust_arcs, 
-        second_axis_thrust_arcs, 
-        first_axis_eff_coast_arcs, 
-        second_axis_eff_coast_arcs, 
-        first_axis_posqd_coast_arcs, 
+        first_axis_thrust_arcs,
+        second_axis_thrust_arcs,
+        first_axis_eff_coast_arcs,
+        second_axis_eff_coast_arcs,
+        first_axis_posqd_coast_arcs,
         second_axis_posqd_coast_arcs,
         first_axis_eclipse_coast_arcs,
         second_axis_eclipse_coast_arcs,

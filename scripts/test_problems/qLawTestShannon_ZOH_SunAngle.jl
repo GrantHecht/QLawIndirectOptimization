@@ -1,5 +1,3 @@
-using DrWatson
-@quickactivate "QLawIndirectOptimization"
 
 using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using DifferentialEquations
@@ -38,7 +36,7 @@ kep0        = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Keplerian
 kept        = [42165.0, 0.01, 0.01, 0.0, 0.0]
 
 # Convert angles in initial kep state to deg
-kep0d        = Vector{Float64}(kep0)
+kep0d       = [kep0[i] for i in eachindex(kep0)]
 kep0d[3:6] .*= 180.0 / pi
 
 # Define error weights
@@ -121,4 +119,4 @@ cache, meef, kepf, time, retcode = generate_qlaw_transfer(
     show_trace      = true, 
     num_particles   = 50,
 )
-fig = plot_transfer(cache, qLawPs)
+plot_transfer("test.png", cache, qLawPs)

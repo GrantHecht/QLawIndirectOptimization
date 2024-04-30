@@ -33,11 +33,12 @@ function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 
     # Start of generated code
     if (fmod(ape, 2.0*pi) > fmod(ape_t, 2.0*pi))
-		g109 = fmod(ape - ape_t, 2.0*pi) >  1.0e-6 ? fmod(ape - ape_t, 2.0*pi) : 1.0e-6;
+        tt = fmod(ape - ape_t, 2.0*pi)
+		g109 = tt >  1.0e-6 ? tt : 1.0e-6;
 	else
-		g109 = fmod(ape - ape_t, 2.0*pi) < -1.0e-6 ? fmod(ape - ape_t, 2.0*pi) : -1.0e-6;
+        tt = fmod(ape - ape_t, 2.0*pi)
+		g109 = tt < -1.0e-6 ? tt : -1.0e-6;
     end
-
 	g110 = cos(g109);
 	g2 = acos(g110);
 	g3 = e*e;
@@ -134,15 +135,13 @@ function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 	g93 = g92 + 1.0;
 	g94 = 1.0 / r_petro;
 	g95 = pow(g93, g94);
-
-	#double  g100 = ran-ran_t;
-	
 	if (fmod(ran, 2.0*pi) > fmod(ran_t, 2.0*pi))
-		g100 = fmod(ran - ran_t, 2.0*pi) >  1.0e-6 ? fmod(ran - ran_t, 2.0*pi) : 1.0e-6;
+        tt = fmod(ran - ran_t, 2.0*pi)
+		g100 = tt >  1.0e-6 ? tt : 1.0e-6;
 	else
-		g100 = fmod(ran - ran_t, 2.0*pi) < -1.0e-6 ? fmod(ran - ran_t, 2.0*pi) : -1.0e-6;
+        tt = fmod(ran - ran_t, 2.0*pi)
+		g100 = tt < -1.0e-6 ? tt : -1.0e-6;
     end
-
 	g101 = cos(g100);
 	g96 = acos(g101);
 	g97 = 1.0 / sqrt(g59);
@@ -184,10 +183,7 @@ function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 	g137 = 1.0 / sqrt(g76);
 	g138 = 1.0 / (g63*g63);
 	g139 = 1.0 / (g125*g125*g125);
-
-	#double  g140 = (g61 / fabs(g61));
 	g140 = g61 > 0.0 ? 1.0 : -1.0;
-
 	g141 = e*g20*g140;
 	g220 = g3*g20*g61*g97;
 	g142 = g141 - g220;
@@ -246,10 +242,7 @@ function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 	g197 = Wsma*mu*g68*g82*g84*g95*g117*g196*(1.0 / 4.0);
 	g198 = 1.0 / (sma*sma*sma*sma);
 	g199 = Wsma*mu*g68*g83*g84*g95*g117*g198*(3.0 / 4.0);
-
-	#double  g200 = (g69 / fabs(g69));
 	g200 = g69 > 0.0 ? 1.0 : -1.0;
-
 	g201 = g94 - 1.0;
 	g202 = pow(g93, g201);
 	g203 = n_petro - 1.0;
@@ -264,11 +257,7 @@ function  dQn(sma, e, inc, ape, ran, tru, m, ps::qLawParams)
 	g212 = -g211 + 1.0;
 	g213 = 1.0 / sqrt(g212);
 	g214 = Wape*g2*g112*g129*g210*g213*2.0;
-
-
-	#double  g215 = (g20 / fabs(g20));
 	g215 = g20 > 0.0 ? 1.0 : -1.0;
-
 	g216 = e*g61*g215;
 	g217 = g3*g20*g61*g137;
 	g218 = g216 - g217;
