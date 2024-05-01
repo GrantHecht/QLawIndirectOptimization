@@ -145,6 +145,8 @@ function generate_qlaw_transfer(ps::qLawParams, cache::Union{Nothing,QLawTransfe
     retcode = :continue
     L0      = Lspan[1]
     Lf      = L0 + integStep
+    ii      = 0
+    pstep   = 10
     while !done
         mee, mass, time = take_integration_step!(ps, mee, mass, time, L0, Lf, sa_con, cache)
 
@@ -156,6 +158,13 @@ function generate_qlaw_transfer(ps::qLawParams, cache::Union{Nothing,QLawTransfe
 
         # Check stopping criteria
         retcode, done = check_stop_criteria(mee, mass, err, ps, Lspan)
+
+        # ii += 1
+        # if ii == 1
+        #     display(kep)
+        # elseif ii == pstep
+        #     ii = 0
+        # end
 
         # Update integration span variables
         L0  = Lf 
@@ -194,7 +203,7 @@ get_pso_constructor(pso_type::Type{PolyesterPSO}) = GlobalOptimization.Polyester
 function generate_qlaw_transfer(
     ps::qLawParams, 
     weight_optimization_cost::F, 
-    pso_type::Type{<:AbstractPSOType} = Threaded; 
+    pso_type::Type{<:AbstractPSOType} = ThreadedPSO; 
     max_time = 60.0, 
     num_particles = 200, 
     show_trace = false,
@@ -244,8 +253,14 @@ function qlaw_weight_optimization_cost(dec_vec, dec_vec_flags, ps_original, cost
         # Run the sim
         mee, kepfs, time, retcode = generate_qlaw_transfer(ps, nothing)
 
+        # Compute final state error
+        err = get_targeting_error(
+            AstroUtils.convertState(mee, AstroUtils.MEE, AstroUtils.Keplerian, ps.meePs.mu),
+            ps,
+        )
+
         # Call the user provided cost function
-        cost(mee, time, retcode)
+        cost(mee, time, err, retcode)
     catch e
         if e isa InterruptException
             throw(e)

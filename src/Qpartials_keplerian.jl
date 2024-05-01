@@ -75,10 +75,18 @@ function Qpartials_keplerian(sma, e, inc, ran, ape, m, ps::qLawParams)
     t43 = t12-1.0;
 
     #t44 = ape+t17;
-	if (fmod(ape, 2.0*pi) > fmod(ape_t, 2.0*pi))
-		t44 = fmod(ape - ape_t, 2.0*pi) >  1.0e-6 ? fmod(ape - ape_t, 2.0*pi) : 1.0e-6;
-	else
-		t44 = fmod(ape - ape_t, 2.0*pi) < -1.0e-6 ? fmod(ape - ape_t, 2.0*pi) : -1.0e-6;
+	# if (fmod(ape, 2.0*pi) > fmod(ape_t, 2.0*pi))
+	# 	t44 = fmod(ape - ape_t, 2.0*pi) >  1.0e-6 ? fmod(ape - ape_t, 2.0*pi) : 1.0e-6;
+	# else
+	# 	t44 = fmod(ape - ape_t, 2.0*pi) < -1.0e-6 ? fmod(ape - ape_t, 2.0*pi) : -1.0e-6;
+    # end
+    val = ape - ape_t
+    t44 = acos(cos(val))
+    if abs(t44) < 1e-6
+        dir = t44 == 0.0 ? 1.0 : sign(t44)
+        t44 = dir * 1e-6
+    elseif mod(t44, π) < 1e-6
+        t44 += -sign(t44)*1e-6
     end
 
     t45 = e+t26;
@@ -95,6 +103,8 @@ function Qpartials_keplerian(sma, e, inc, ran, ape, m, ps::qLawParams)
     if abs(t47) < 1e-6
         dir = t47 == 0.0 ? 1.0 : sign(t47)
         t47 = dir * 1e-6
+    elseif mod(t47, π) < 1e-6
+        t47 += -sign(t47)*1e-6
     end
 
     t48 = sma+t33;

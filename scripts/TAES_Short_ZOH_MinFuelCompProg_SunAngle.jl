@@ -1,7 +1,7 @@
 using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using OrdinaryDiffEq
 using QLawIndirectOptimization
-using JLD2, Infiltrator
+using Infiltrator
 
 function main()
     # Furnsh default spice kernels
@@ -12,8 +12,8 @@ function main()
 
     # Spacecraft model
     m0   = 1200.0
-    Isp  = 3000.0    
-    tMax = 2.0
+    Isp  = 1800.0    
+    tMax = 0.3
     spaceCraft = SimpleSpacecraft(m0, m0, tMax, Isp)
 
     # Force model parameters
@@ -23,22 +23,21 @@ function main()
     tbEphems    = Ephemerides(
         (initEpoch - 100.0, initEpoch + ephemDays*86400.0), 
         nPoints, 
-        [10], 
+        [10,301], 
         399, 
         "J2000",
     )
     meeParams   = MEEParams(
         initEpoch; 
-        LU = 1.0, MU = 1.0, TU = 24.0*3600.0, 
+        LU = 384400.0, MU = 1.0, TU = 24.0*3600.0, 
         μ = μs,
-        thirdBodyPerterbations = false,
         thirdBodyEphemerides = tbEphems, 
-        nonsphericalGravity = false,
+        nonsphericalGravity = true,
     )
 
     # Define initial and target orbital elements
-    kep0        = [24505.9, 0.725,   0.6,   0.0,   0.0, 0.0]
-    kept        = [26500.0, 0.700, 116.0, 180.0, 270.0]
+    kep0        = [26500.0, 0.7, 0.01,  0.0,  0.0, 0.0]
+    kept        = [26700.0, 0.7, 20.0, 60.0,  0.0]
 
     # Define tolerance on targeted elements
     atol        = 20.0
@@ -51,19 +50,15 @@ function main()
     # Construct qLaw parameters
     qLawPs       = qLawParams(
         kep0, kept;
-        oeW                      = [1.0, 1.0, 1.0, 1.0, 1.0],
-        Wp                       = 1.0,
-        rpmin                    = 6578.0,
+        oeW                      = [1.0, 1.0, 1.0, 1.0, 0.0],
         oeTols                   = tolVec,
-        ηr_tol                   = 0.0,
+        ηr_tol                   = 0.1,
         meeParams                = meeParams,
         spaceCraft               = spaceCraft,
-        desolver                 = Tsit5(),
-        reltol                   = 1e-8,
-        abstol                   = 1e-8,
-        maxRevs                  = 200.0,
+        desolver                 = Vern7(),
+        maxRevs                  = 500.0,
         integStepOpt             = 10.0,
-        integStepGen             = 0.1,
+        integStepGen             = 1.0,
         writeData                = true,
         type                     = :QDUC,
         eSteps                   = 10,
@@ -75,29 +70,25 @@ function main()
     )
 
     # Define cost
-    function cost(state, time, retcode)
-        J = time #- 5*state[7]
+    function cost(state, time, err, retcode)
+        J = time - 5*state[7]
         if retcode != :success
-            J += 1e12
+            J += 1e8*maximum(err)
         end
         return J
     end
 
     # Solve
-    cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-        qLawPs, cost, QLawIndirectOptimization.PolyesterPSO; 
-        max_time        = 3600.0, 
-        show_trace      = true, 
-        num_particles   = 200,
-    )
-    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+    #     qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
+    #     max_time        = 3600.0, 
+    #     show_trace      = true, 
+    #     num_particles   = 100,
+    # )
+    qLawPs.oeW .= [7.825642311126991,10.0,7.725563654519402,0.3247137971002506,0.0] 
+    qLawPs.ηr = 0.0 
+    #cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
     plot_transfer("test.png", cache, qLawPs; axes = SA[1,2])
-
-    # Save
-    jldsave(
-        joinpath(@__DIR__, "..", "data", "TAES", "PetroMolniya.jld2"), 
-        cache = cache, qLawPs = qLawPs,
-    )
 
     @infiltrate
     return (cache, qLawPs)

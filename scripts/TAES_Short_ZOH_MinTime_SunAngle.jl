@@ -1,6 +1,7 @@
 using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using OrdinaryDiffEq
 using QLawIndirectOptimization
+using Infiltrator
 
 function main()
     # Furnsh default spice kernels
@@ -35,8 +36,8 @@ function main()
     )
 
     # Define initial and target orbital elements
-    kep0        = [26500.0, 0.7, 0.01,  0.0,  45.0, 0.0]
-    kept        = [26700.0, 0.7, 20.0, 60.0,  65.0]
+    kep0        = [26500.0, 0.7, 0.01,  0.0,  0.0, 0.0]
+    kept        = [26700.0, 0.7, 20.0, 60.0,  0.0]
 
     # Define tolerance on targeted elements
     atol        = 20.0
@@ -54,10 +55,8 @@ function main()
         ηr_tol                   = 0.0,
         meeParams                = meeParams,
         spaceCraft               = spaceCraft,
-        desolver                 = Tsit5(),
-        reltol                   = 1e-8,
-        abstol                   = 1e-8,
-        maxRevs                  = 400.0,
+        desolver                 = Vern7(),
+        maxRevs                  = 500.0,
         integStepOpt             = 10.0,
         integStepGen             = 1.0,
         writeData                = true,
@@ -71,24 +70,26 @@ function main()
     )
 
     # Define cost
-    function cost(state, time, retcode)
+    function cost(state, time, err, retcode)
         J = time #- 5*state[7]
         if retcode != :success
-            J += 1e12
+            J += 1e8*maximum(err)
         end
         return J
     end
 
     # Solve
-    cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-        qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
-        max_time        = 600.0, 
-        show_trace      = true, 
-        num_particles   = 50,
-    )
-    #cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+    #     qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
+    #     max_time        = 3600.0, 
+    #     show_trace      = true, 
+    #     num_particles   = 100,
+    # )
+    ps.oeW .= [4.252647196097554,7.828168230326815,5.644962073810314,0.20125849969261253,0.0]
+    cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
     plot_transfer("test.png", cache, qLawPs; axes = SA[1,2])
 
+    @infiltrate
     return (cache, qLawPs)
 end
 
