@@ -55,7 +55,7 @@ edotxx = (2*p*f)/h;
 incdotxx = (p*f)/(h*(sqrt(1-e^2*(sin(ape))^2)-e*abs(cos(ape))));
 
 % right ascension of the ascending node
-randotxx = (p*f)/(h*sin(inc)*(sqrt(1-e^2*(cos(ape))^2)- ...
+randotxx = (p*f)/(h*sin(inc)*(sqrt(1-e^2*(cos(ape))^2) - ...
 e*abs(sin(ape))));
 
 % argument of periapsis: in-plane
@@ -77,7 +77,7 @@ P = exp(k_petro*(1 - rper/rpermin));
 
 % semi-major axis term also has scaling function:
 % Grant Hecht - Removed absolute value from equation
-s_sma = (1+((sma-sma_t)/(m_petro*sma_t))^n_petro)^(1/r_petro);
+s_sma = (1 + ((sma-sma_t)/(m_petro*sma_t))^n_petro)^(1/r_petro);
 
 % semi-major axis term
 Qsma = s_sma*(((sma - sma_t)/smadotxx)^2);
@@ -115,12 +115,12 @@ dQfulldcoe(1,4) = diff(Q, ape);
 dQfulldcoe(1,5) = diff(Q, ran);
 
 % Generate code for partials
-ccode(dQfulldcoe(1,1), 'file', './data/dQdsma.txt');
-ccode(dQfulldcoe(1,2), 'file', './data/dQde.txt');
-ccode(dQfulldcoe(1,3), 'file', './data/dQdinc.txt');
-ccode(dQfulldcoe(1,4), 'file', './data/dQdape.txt');
-ccode(dQfulldcoe(1,5), 'file', './data/dQdran.txt');
-ccode(dQfulldcoe, 'file', './data/Qpartials.txt');
+ccode(dQfulldcoe(1,1), 'file', './ccode/dQdsma.txt');
+ccode(dQfulldcoe(1,2), 'file', './ccode/dQde.txt');
+ccode(dQfulldcoe(1,3), 'file', './ccode/dQdinc.txt');
+ccode(dQfulldcoe(1,4), 'file', './ccode/dQdape.txt');
+ccode(dQfulldcoe(1,5), 'file', './ccode/dQdran.txt');
+ccode(dQfulldcoe, 'file', './ccode/Qpartials.txt');
 
 
 
