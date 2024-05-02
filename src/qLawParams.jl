@@ -74,6 +74,7 @@ mutable struct qLawParams{DPT <: AstroEOMs.MEEParams, DES}
 
     # Storage info (Switch to type flag in future)
     savedStatesAtSteps::Int
+    savePerturbations::Bool
     writeDataToFile::Bool
     writeDataOnlyAtSteps::Bool
 end
@@ -111,7 +112,8 @@ function qLawParams(oe0,oet;
     thrustSunAngleConstraint = false,
     thrustSunAngle           = 30.0*pi/180.0,
     toSunVec                 = [1.0, 0.0, 0.0],
-    panelType       = :dual # options: :dual, thrustdir, antithrustdir
+    panelType                = :dual, # options: :dual, thrustdir, antithrustdir
+    save_perturbations       = false,
     ) where {DPT,DES}
 
     # Check argument size
@@ -184,5 +186,5 @@ function qLawParams(oe0,oet;
         b_petro,m_petro,n_petro,r_petro,μ,m0,mp,tMax,c,0.0,0.0,0.0,false,
         meeParams,spaceCraft,thrustSunAngleConstraint,toSunVec,thrustSunAngle,panelType,eclipsing,
         false,RB,RS,desolver,reltol,abstol,maxRevs,integStepOpt,integStepGen,type,returnData,
-        savedStatesAtSteps,writeData,onlyWriteDataAtSteps)
+        savedStatesAtSteps,save_perturbations,writeData,onlyWriteDataAtSteps)
 end

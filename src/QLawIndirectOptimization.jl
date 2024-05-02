@@ -20,6 +20,7 @@ fmod(a,b)   = mod(a,b)
 
 # Include qlaw source code
 include("qLawParams.jl")
+include("utils.jl")
 include("Qpartials_keplerian.jl")
 include("gaussVarKeplerian.jl")
 include("qLawEOMsSundmanTransformedZOH.jl")

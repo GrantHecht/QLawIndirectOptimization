@@ -9,6 +9,8 @@ struct QLawTransferCache
     coast_positive_dQs::Vector{Bool}
     coast_effectives::Vector{Bool}
     coast_eclipse::Vector{Bool}
+    thrid_body_perturbations::Vector{SVector{3,Float64}}
+    J2_perturbations::Vector{SVector{3,Float64}}
 
     # Fields for state at steps
     time_at_steps::Vector{Float64}
@@ -28,6 +30,8 @@ struct QLawTransferCache
             Vector{Bool}(undef, 0),
             Vector{Bool}(undef, 0),
             Vector{Bool}(undef, 0),
+            Vector{SVector{3,Float64}}(undef, 0),
+            Vector{SVector{3,Float64}}(undef, 0),
             Vector{Float64}(undef, 0),
             Vector{SVector{7,Float64}}(undef, 0),
             weights, η,
@@ -44,6 +48,14 @@ function dump_to_mat(cache::QLawTransferCache, filename::String)
         states_mat[i,:] .= cache.states[i]
         angles_mat[i,:] .= cache.angles[i]
     end
+    tbody_mat  = zeros(length(cache.thrid_body_perturbations), 3)
+    for i in eachindex(cache.thrid_body_perturbations)
+        tbody_mat[i,:] .= cache.thrid_body_perturbations[i]
+    end
+    J2_mat     = zeros(length(cache.J2_perturbations), 3)
+    for i in eachindex(cache.J2_perturbations)
+        J2_mat[i,:] .= cache.J2_perturbations[i]
+    end
     for i in eachindex(cache.state_at_steps)
         states_at_steps_mat[i,:] .= cache.state_at_steps[i]
     end
@@ -58,6 +70,8 @@ function dump_to_mat(cache::QLawTransferCache, filename::String)
         "coast_positive_dQs" => cache.coast_positive_dQs,
         "coast_effectives" => cache.coast_effectives,
         "coast_eclipse" => cache.coast_eclipse,
+        "thrid_body_perturbations" => tbody_mat,
+        "J2_perturbations" => J2_mat,
         "time_at_steps" => cache.time_at_steps,
         "state_at_steps" => states_at_steps_mat,
         "weights" => cache.weights,
@@ -100,6 +114,18 @@ function push_update!(cache::QLawTransferCache, de_sol, α, β, thrust, eclipse_
         push!(cache.coast_eclipse,      eclipse_coast)
         push!(cache.coast_effectives,   effectivity_coast)
         push!(cache.coast_positive_dQs, positive_dQ_coast)
+
+        # Push perturbations
+        if ps.savePerturbations
+            if ps.meePs.thirdBodyPerterbations
+                tb_pert = get_third_body_perturbation(state_cart, time, ps)
+                push!(cache.thrid_body_perturbations, tb_pert)
+            end
+            if ps.meePs.onlyJ2
+                j2_pert = get_j2_perturbation(state_mee, ps)
+                push!(cache.J2_perturbations, j2_pert)
+            end
+        end
 
         # Compute sun-angle
         if ps.meePs.thirdBodyEphemerides !== nothing && 10 in ps.meePs.thirdBodyEphemerides.targIDs

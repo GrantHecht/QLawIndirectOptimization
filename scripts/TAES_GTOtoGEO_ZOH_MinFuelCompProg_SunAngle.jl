@@ -75,11 +75,12 @@ function main()
         thrustSunAngle           = 50.0*pi/180.0,
         onlyWriteDataAtSteps     = true,
         savedStatesAtSteps       = 10,
+        save_perturbations       = true,
     )
 
     # Define cost
     function cost(state, time, err, retcode)
-        J = time - 5*state[7]
+        J = time - 20*state[7]
         if retcode != :success
             J += 1e8*maximum(err)
         end
