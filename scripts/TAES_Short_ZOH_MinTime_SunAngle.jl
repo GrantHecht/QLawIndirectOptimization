@@ -87,7 +87,9 @@ function main()
     # )
     qLawPs.oeW .= [4.252647196097554,7.828168230326815,5.644962073810314,0.20125849969261253,0.0]
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
-    plot_transfer("test.png", cache, qLawPs; axes = SA[1,2])
+    plot_transfer("short_xy.png", cache, qLawPs; axes = SA[1,2], linewidth = 0.25)
+    plot_transfer("short_xz.png", cache, qLawPs; axes = SA[1,3], linewidth = 0.25)
+    plot_transfer("short_yz.png", cache, qLawPs; axes = SA[2,3], linewidth = 0.25)
 
     @infiltrate
     return (cache, qLawPs)

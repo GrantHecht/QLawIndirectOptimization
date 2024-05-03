@@ -160,9 +160,11 @@ function plot_transfer(
     cache::QLawTransferCache, ps::qLawParams;
     axes = SA[1,2],
     show_coast = true,
+    linewidth = 1.0,
+    linewidth_terminal = 1.0,
 )
     if show_coast
-        return plot_transfer_with_coasts(cache, ps, axes)
+        return plot_transfer_with_coasts(cache, ps, axes; linewidth = linewidth, linewidth_terminal = linewidth_terminal)
     else
         return plot_transfer_without_coasts(cache, ps, axes)
     end
@@ -172,15 +174,25 @@ function plot_transfer(
     file::String, cache::QLawTransferCache, ps::qLawParams;
     axes = SA[1,2],
     show_coast = true,
+    linewidth = 1.0,
+    linewidth_terminal = 1.0,
 )
-    fig = plot_transfer(cache, ps; axes = axes, show_coast = show_coast)
+    fig = plot_transfer(
+        cache, ps; 
+        axes = axes, 
+        show_coast = show_coast, 
+        linewidth = linewidth,
+        linewidth_terminal = linewidth_terminal,
+    )
     CM.save(file, fig)
     return nothing
 end
 
 
 function plot_transfer_with_coasts(
-    cache::QLawTransferCache, ps::qLawParams, axes
+    cache::QLawTransferCache, ps::qLawParams, axes;
+    linewidth = 1.0, 
+    linewidth_terminal = 1.0,
 )
     # Grab length unit
     DU = ps.meePs.LU
@@ -188,12 +200,20 @@ function plot_transfer_with_coasts(
     # Grab the thrust and coast arcs
     a1_ta, a2_ta, a1_ef, a2_ef, a1_pq, a2_pq, a1_ec, a2_ec = get_thrust_and_coast_arcs(cache, ps, axes)
 
+    # Get initial and final orbit
+    x0 = cache.states[1]
+    xf = cache.states[end]
+    a1_ik, a2_ik = get_keplerian_orbit(x0, ps, axes)
+    a1_fk, a2_fk = get_keplerian_orbit(xf, ps, axes)
+
     # Plot
     fig = CM.Figure(); ax = CM.Axis(fig[1,1]; aspect=CM.DataAspect())
-    CM.lines!(ax, a1_ta, a2_ta, label="Thrust Arcs", color=:red)
-    CM.lines!(ax, a1_ec, a2_ec, label="Ecc. Coast Arcs", color=:green)
-    CM.lines!(ax, a1_ef, a2_ef, label="Eff. Coast Arcs", color=:blue)
-    CM.lines!(ax, a1_pq, a2_pq, label="dQ > 0 Coast Arcs", color=:deepskyblue)
+    CM.lines!(ax, a1_ta, a2_ta, label="Thrust Arcs", color=:red, linewidth=linewidth)
+    CM.lines!(ax, a1_ec, a2_ec, label="Ecc. Coast Arcs", color=:green, linewidth=linewidth)
+    CM.lines!(ax, a1_ef, a2_ef, label="Eff. Coast Arcs", color=:blue, linewidth=linewidth)
+    CM.lines!(ax, a1_pq, a2_pq, label="dQ > 0 Coast Arcs", color=:deepskyblue, linewidth=linewidth)
+    CM.lines!(ax, a1_ik, a2_ik, label="Initial Orbit", color=:black, linewidth=linewidth_terminal)
+    CM.lines!(ax, a1_fk, a2_fk, label="Final Orbit", color=:black, linewidth=linewidth_terminal)
     return fig
 end
 
@@ -203,6 +223,32 @@ function plot_transfer_without_coasts(
 
 end
 
+function get_keplerian_orbit(cart, ps::qLawParams, axes; n::Int = 1000)
+    # Get parameters
+    μ = ps.μ
+    DU = ps.meePs.LU
+
+    # Handle states
+    r0 = SA[cart[1], cart[2], cart[3]]
+    v0 = SA[cart[4], cart[5], cart[6]]
+
+    # Compute orital period
+    ξ = 0.5*norm(v0)^2 - μ/norm(r0)
+    a = -μ / (2.0*ξ)
+    P = 2.0*π*sqrt(a^3 / μ)
+
+    # Compute orbit
+    Δts = range(0.0, P; length = n)
+    first_axis_pos = Vector{Float32}(undef, n)
+    second_axis_pos = Vector{Float32}(undef, n)
+    @inbounds for i in eachindex(Δts)
+        Δt = Δts[i]
+        r, v, flag = kepler(r0, v0, Δt, μ)
+        first_axis_pos[i] = DU*r[axes[1]]
+        second_axis_pos[i] = DU*r[axes[2]]
+    end
+    return first_axis_pos, second_axis_pos
+end
 
 function get_thrust_and_coast_arcs(
     cache::QLawTransferCache, ps::qLawParams, axes
