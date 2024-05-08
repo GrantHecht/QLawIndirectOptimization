@@ -1,47 +1,45 @@
 using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using OrdinaryDiffEq
 using QLawIndirectOptimization
-using Infiltrator
+using JLD2, Infiltrator
 
 function main()
+    # Furnsh default spice kernels
     furnshDefaults()
 
     # Compute initial epoch
-    initEpoch   = utc2et("2000-03-22T00:00:00")
+    initEpoch   = utc2et("2023-01-01T13:30:00")
 
     # Spacecraft model
     m0   = 1200.0
-    P    = 5.0*1000.0   # [W]
-    Isp  = 1800.0       # [s]
-    g0   = 9.80664      # [m/s^2]
-    η    = 0.55 
-    tMax = 2*η*P / (g0 * Isp)
+    Isp  = 3000.0    
+    tMax = 0.5
     spaceCraft = SimpleSpacecraft(m0, m0, tMax, Isp)
 
     # Force model parameters
     μs          = 3.986e5
-    ephemDays   = 1000.0
-    ephemTspan  = (initEpoch - 100.0, initEpoch + ephemDays*86400.0)
+    ephemDays   = 5000.0
     nPoints     = ceil(Int64, 2*ephemDays)
     tbEphems    = Ephemerides(
         (initEpoch - 100.0, initEpoch + ephemDays*86400.0), 
         nPoints, 
-        [10,301], 
+        [10], 
         399, 
         "J2000",
     )
     meeParams   = MEEParams(
         initEpoch; 
-        LU = 384400.0, MU = 1.0, TU = 24.0*3600.0, 
+        LU = 1.0, MU = 1.0, TU = 24.0*3600.0, 
         μ = μs,
+        thirdBodyPerterbations = false,
         thirdBodyEphemerides = tbEphems, 
-        nonsphericalGravity = true,
+        nonsphericalGravity = false,
     )
 
     # Define initial and target orbital elements
     mee0        = SA[11359.07, 0.7306, 0.0, 0.2539676, 0.0, 0.0]
     kep0        = AstroUtils.convertState(mee0, AstroUtils.MEE, AstroUtils.Keplerian, μs)
-    kept        = [42165.0, 0.01, 0.01, 0.0, 0.0]
+    kept        = [26500.0, 0.700, 116.0, 180.0, 270.0]
 
     # Convert angles in initial kep state to deg
     kep0d       = [kep0[i] for i in eachindex(kep0)]
@@ -58,69 +56,72 @@ function main()
     # Construct qLaw parameters
     qLawPs       = qLawParams(
         kep0d, kept;
-        oeW                      = [1.0, 1.0, 1.0, 0.0, 0.0],
+        oeW                      = [1.0, 1.0, 1.0, 1.0, 0.0],
+        Wp                       = 0.1,
+        rpmin                    = 6578.0,
         oeTols                   = tolVec,
-        ηr_tol                   = 0.1,
+        ηr_tol                   = 0.0,
         meeParams                = meeParams,
         spaceCraft               = spaceCraft,
         desolver                 = Vern7(),
-        maxRevs                  = 500.0,
-        integStepOpt             = 10.0,
-        integStepGen             = 0.1,
+        reltol                   = 1e-8,
+        abstol                   = 1e-8,
+        maxRevs                  = 400.0,
+        integStepOpt             = 1.0,
+        integStepGen             = 1.0,
         writeData                = true,
-        type                     = :QDSAA,
-        eSteps                   = 30,
+        type                     = :QDUC,
+        eSteps                   = 10,
         eclipsing                = true,
         thrustSunAngleConstraint = true,
         thrustSunAngle           = 50.0*pi/180.0,
         onlyWriteDataAtSteps     = true,
         savedStatesAtSteps       = 10,
-        save_perturbations       = true,
     )
 
     # Define cost
     function cost(state, time, err, retcode)
-        J = time - 20*state[7]
+        J = time #- 5*state[7]
         if retcode != :success
-            J += 1e8*maximum(err)
+            J = 1e8*maximum(err)
         end
         return J
     end
 
     # Solve
     # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-    #     qLawPs, cost; 
-    #     max_time        = 500.0, 
+    #     qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
+    #     max_time        = 2*3600.0, 
     #     show_trace      = true, 
-    #     num_particles   = 100,
+    #     num_particles   = 30,
     # )
 
-    qLawPs.oeW .= [2.9085806924389734, 2.2829812129445024, 10.0, 0.0, 0.0]
-    qLawPs.ηr = 0.18908574785537097
+    qLawPs.oeW .= [9.546535123066946, 4.9366795064551185, 3.360605913416598, 1.202994187072187, 0.0]
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # Save solution information
     jldsave(
-        joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinFuel.jld2");
+        joinpath(@__DIR__, "..", "data", "TAES", "MolniyaLikeNP_MinTime.jld2");
         cache = cache, params = qLawPs,
     )
-    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinFuel.jld2"))
+    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "mat", "MolniyaLikeNP_MinTime.mat"))
 
     # Generate figures
     plot_transfer(
-        joinpath(@__DIR__, "..", "data", "TAES", "figures", "GEO_MinFuel_xy.png"), cache, qLawPs; 
+        joinpath(@__DIR__, "..", "data", "TAES", "figures", "MolniyaLikeNP_MinTime_xy.png"), cache, qLawPs; 
         axes = [1,2], linewidth=0.2,
     )
     plot_transfer(
-        joinpath(@__DIR__, "..", "data", "TAES", "figures", "GEO_MinFuel_xz.png"), cache, qLawPs; 
+        joinpath(@__DIR__, "..", "data", "TAES", "figures", "MolniyaLikeNP_MinTime_xz.png"), cache, qLawPs; 
         axes = [1,3], linewidth=0.2,
     )
     plot_transfer(
-        joinpath(@__DIR__, "..", "data", "TAES", "figures", "GEO_MinFuel_yz.png"), cache, qLawPs; 
+        joinpath(@__DIR__, "..", "data", "TAES", "figures", "MolniyaLikeNP_MinTime_yz.png"), cache, qLawPs; 
         axes = [2,3], linewidth=0.2,
     )
 
     @infiltrate
+    return (cache, qLawPs)
 end
 
-main()
+cache, ps = main()

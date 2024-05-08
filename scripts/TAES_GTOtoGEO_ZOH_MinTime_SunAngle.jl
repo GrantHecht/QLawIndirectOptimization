@@ -2,6 +2,7 @@ using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using OrdinaryDiffEq
 using QLawIndirectOptimization
 using Infiltrator
+using JLD2
 
 function main()
     furnshDefaults()
@@ -87,16 +88,39 @@ function main()
         return J
     end
 
-    # Solve
+    # PSO Optimization
     # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
     #     qLawPs, cost; 
     #     max_time        = 500.0, 
     #     show_trace      = true, 
     #     num_particles   = 100,
     # )
+
+    # Post optimization trajectory generation
     qLawPs.oeW .= [3.4289069981082325, 1.589244979863417, 9.514483085768012, 0.0, 0.0]
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
-    plot_transfer("test.png", cache, qLawPs)
+
+    # Save solution information
+    jldsave(
+        joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinTime.jld2");
+        cache = cache, params = qLawPs,
+    )
+    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinTime.jld2"))
+
+    # Generate figures
+    plot_transfer(
+        joinpath(@__DIR__, "..", "data", "TAES", "figures", "GEO_MinTime_xy.png"), cache, qLawPs; 
+        axes = [1,2], linewidth=0.2,
+    )
+    plot_transfer(
+        joinpath(@__DIR__, "..", "data", "TAES", "figures", "GEO_MinTime_xz.png"), cache, qLawPs; 
+        axes = [1,3], linewidth=0.2,
+    )
+    plot_transfer(
+        joinpath(@__DIR__, "..", "data", "TAES", "figures", "GEO_MinTime_yz.png"), cache, qLawPs; 
+        axes = [2,3], linewidth=0.2,
+    )
+
 
     @infiltrate
 end

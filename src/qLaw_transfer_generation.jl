@@ -159,13 +159,6 @@ function generate_qlaw_transfer(ps::qLawParams, cache::Union{Nothing,QLawTransfe
         # Check stopping criteria
         retcode, done = check_stop_criteria(mee, mass, err, ps, Lspan)
 
-        # ii += 1
-        # if ii == 1
-        #     display(kep)
-        # elseif ii == pstep
-        #     ii = 0
-        # end
-
         # Update integration span variables
         L0  = Lf 
         Lf  = L0 + integStep
@@ -216,7 +209,7 @@ function generate_qlaw_transfer(
     LB = fill(0.0, n)
     UB = fill(10.0, n)
     if dec_vec_flags[end]
-        UB[end] = 1.0
+        UB[end] = 0.5
     end
     prob = GlobalOptimization.OptimizationProblem(
         x -> qlaw_weight_optimization_cost(x, dec_vec_flags, ps, weight_optimization_cost),
@@ -238,6 +231,10 @@ function generate_qlaw_transfer(
 
     # Update the parameters with the optimal decision variables
     parameter_update_from_dec_vec!(ps, res.xbest, dec_vec_flags)
+
+    # Print optimized parameters before generating final trajectory output
+    println("Weights: [$(ps.oeW[1]), $(ps.oeW[2]), $(ps.oeW[3]), $(ps.oeW[4]), $(ps.oeW[5])]")
+    println("Eff. Tol: $(ps.ηr)")
 
     # Generate the transfer and return
     return generate_qlaw_transfer(ps)
