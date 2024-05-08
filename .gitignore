@@ -1,6 +1,7 @@
 # Ignore these files
 Manifest.toml
-data/**
+data/TAES/*
+*.tar.gz
 
 # But don't ignore these
 !**/**_cp.txt
