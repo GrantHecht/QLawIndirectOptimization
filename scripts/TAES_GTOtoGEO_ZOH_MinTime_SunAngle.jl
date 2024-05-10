@@ -105,7 +105,7 @@ function main()
         joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinTime.jld2");
         cache = cache, params = qLawPs,
     )
-    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinTime.jld2"))
+    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "mat", "GEO_MinTime.mat"))
 
     # Generate figures
     plot_transfer(

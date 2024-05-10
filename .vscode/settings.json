@@ -107,4 +107,5 @@
         "Main.Core.Intrinsics",
         "Main.Core.Intrinsics."
     ],
+    "julia.environmentPath": "/Users/granthec/Documents/Projects/Code/QLawIndirectOptimization/scripts",
 }

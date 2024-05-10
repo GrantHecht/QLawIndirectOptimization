@@ -2,6 +2,7 @@ using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using OrdinaryDiffEq
 using QLawIndirectOptimization
 using Infiltrator
+using JLD2
 
 function main()
     furnshDefaults()
@@ -104,7 +105,7 @@ function main()
         joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinFuel.jld2");
         cache = cache, params = qLawPs,
     )
-    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinFuel.jld2"))
+    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "mat", "GEO_MinFuel.mat"))
 
     # Generate figures
     plot_transfer(
