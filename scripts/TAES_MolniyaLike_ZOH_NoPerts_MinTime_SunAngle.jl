@@ -70,7 +70,7 @@ function main()
         integStepOpt             = 1.0,
         integStepGen             = 1.0,
         writeData                = true,
-        type                     = :QDUC,
+        type                     = :QDSA,
         eSteps                   = 10,
         eclipsing                = true,
         thrustSunAngleConstraint = true,
@@ -96,8 +96,12 @@ function main()
     #     num_particles   = 30,
     # )
 
-    qLawPs.oeW .= [9.546535123066946, 4.9366795064551185, 3.360605913416598, 1.202994187072187, 0.0]
+    qLawPs.oeW .= [7.979583785284143, 4.860066357331482, 2.2641403595508245, 3.5204921601171613, 0.0]
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
+
+    # unconstrained case
+    # qLawPs.oeW .= [9.546535123066946, 4.9366795064551185, 3.360605913416598, 1.202994187072187, 0.0]
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # Save solution information
     jldsave(

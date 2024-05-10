@@ -2,6 +2,7 @@ using AstroEOMs, AstroUtils, SPICE, StaticArrays
 using OrdinaryDiffEq
 using QLawIndirectOptimization
 using Infiltrator
+using JLD2
 
 function main()
     furnshDefaults()
@@ -90,13 +91,13 @@ function main()
     # Solve
     # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
     #     qLawPs, cost; 
-    #     max_time        = 500.0, 
+    #     max_time        = 600.0, 
     #     show_trace      = true, 
-    #     num_particles   = 100,
+    #     num_particles   = 30,
     # )
 
-    qLawPs.oeW .= [2.9085806924389734, 2.2829812129445024, 10.0, 0.0, 0.0]
-    qLawPs.ηr = 0.18908574785537097
+    qLawPs.oeW .= [0.5348192716035621, 3.4832934543785257, 9.455961810142009, 0.0, 0.0]
+    qLawPs.ηr = 0.4816220636932868
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # Save solution information
@@ -104,7 +105,7 @@ function main()
         joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinFuel.jld2");
         cache = cache, params = qLawPs,
     )
-    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinFuel.jld2"))
+    dump_to_mat(cache, joinpath(@__DIR__, "..", "data", "TAES", "mat", "GEO_MinFuel.mat"))
 
     # Generate figures
     plot_transfer(

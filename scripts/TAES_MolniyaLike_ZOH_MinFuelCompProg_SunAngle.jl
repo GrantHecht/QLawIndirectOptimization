@@ -69,7 +69,7 @@ function main()
         integStepOpt             = 1.0,
         integStepGen             = 1.0,
         writeData                = true,
-        type                     = :QDUC,
+        type                     = :QDSA,
         eSteps                   = 10,
         eclipsing                = true,
         thrustSunAngleConstraint = true,
@@ -95,10 +95,14 @@ function main()
     #     num_particles   = 30,
     # )
 
-    # First solution found (50 particles with only 3600 seconds run time)
-    qLawPs.oeW .= [9.69365468853279, 10.0, 3.154371632157578, 4.963453163599878, 0.0]
-    qLawPs.ηr = 0.05602187238159695
+    qLawPs.oeW .= [6.714806348309516, 7.957793270469378, 5.25926959747461, 1.9088836107960239, 0.0]
+    qLawPs.ηr = 0.09134109317011999
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
+
+    # First solution found (50 particles with only 3600 seconds run time)
+    # qLawPs.oeW .= [9.69365468853279, 10.0, 3.154371632157578, 4.963453163599878, 0.0]
+    # qLawPs.ηr = 0.05602187238159695
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # Save solution information
     jldsave(
