@@ -96,8 +96,8 @@ function main()
     #     num_particles   = 100,
     # )
 
-    qLawPs.oeW .= [2.9085806924389734, 2.2829812129445024, 10.0, 0.0, 0.0]
-    qLawPs.ηr = 0.18908574785537097
+    qLawPs.oeW .= [0.5348192716035621, 3.4832934543785257, 9.455961810142009, 0.0, 0.0]
+    qLawPs.ηr = 0.4816220636932868
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # Save solution information

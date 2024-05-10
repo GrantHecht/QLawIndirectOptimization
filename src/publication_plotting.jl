@@ -12,24 +12,22 @@ function generate_publication_figures(
 end
 
 function generate_thrust_angle_figure(dir_path, cache::QLawTransferCache, ps::qLawParams)
-    if !all(isnan.(cache.sun_angles))
-        # Instantiate figure
-        fig = CM.Figure(; size = (4*pt_per_inch, 3*pt_per_inch), fontsize = 10)
-        ax = CM.Axis(fig[1,1]; xlabel = L"time, days$$", ylabel = L"$\psi$, deg")
+    # Instantiate figure
+    fig = CM.Figure(; size = (4*pt_per_inch, 3*pt_per_inch), fontsize = 10)
+    ax = CM.Axis(fig[1,1]; xlabel = L"time, days$$", ylabel = L"$\psi$, deg")
 
-        # Strip data to reduce points plotted
-        times_stripped = cache.times[1:10:end]
-        angles_stripped = cache.sun_angles[1:10:end]
+    # Strip data to reduce points plotted
+    times_stripped = cache.times[1:10:end]
+    angles_stripped = cache.sun_angles[1:10:end]
 
-        # Plot sun-angles
-        CM.scatter!(
-            ax, times_stripped, angles_stripped;
-            markersize = 2,
-        )
+    # Plot sun-angles
+    CM.scatter!(
+        ax, times_stripped, angles_stripped;
+        markersize = 2,
+    )
 
-        # Save figure
-        CM.save(joinpath(dir_path, "sun_angles.png"), fig)
-    end
+    # Save figure
+    CM.save(joinpath(dir_path, "sun_angles.png"), fig)
     return nothing
 end
 

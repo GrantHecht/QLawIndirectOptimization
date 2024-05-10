@@ -128,7 +128,8 @@ function push_update!(cache::QLawTransferCache, de_sol, α, β, thrust, eclipse_
         end
 
         # Compute sun-angle
-        if ps.meePs.thirdBodyEphemerides !== nothing && 10 in ps.meePs.thirdBodyEphemerides.targIDs
+        coasting = eclipse_coast || effectivity_coast || positive_dQ_coast
+        if !coasting && ps.meePs.thirdBodyEphemerides !== nothing && 10 in ps.meePs.thirdBodyEphemerides.targIDs
             # Position vectors
             rs  = AstroUtils.getPosition(ps.meePs.thirdBodyEphemerides, 10, ps.meePs.initEpoch + time*ps.meePs.TU)
             rss = SA[
