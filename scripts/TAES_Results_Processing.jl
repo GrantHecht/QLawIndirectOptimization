@@ -23,6 +23,7 @@ function main(transfer_str::String)
     nrev = cache.time_at_steps[end] / (2*pi)
 
     # Summarize results
+    println("Case label:        $transfer_str")
     println("Transfer time:     $(cache.times[end]) days")
     println("Revolutions:       $nrev")
     println("Mass consumed:     $Δm kg")
@@ -37,6 +38,6 @@ end
 
 gto_str_list = ("gto_min_time", "gto_min_fuel")
 molniya_str_list = ("molniya_like_min_time", "molniya_like_np_min_time", "molniya_like_min_fuel", "molniya_like_np_min_fuel")
-for str in molniya_str_list
+for str in (gto_str_list..., molniya_str_list...)
     main(str)
 end
