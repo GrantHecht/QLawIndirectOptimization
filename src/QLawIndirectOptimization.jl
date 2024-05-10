@@ -7,6 +7,7 @@ using DelimitedFiles
 using DifferentialEquations
 using LinearAlgebra
 using Interpolations
+using LaTeXStrings
 
 import MAT
 import GlobalOptimization
@@ -27,10 +28,12 @@ include("qLawEOMsSundmanTransformedZOH.jl")
 include("qLawThrust_Keplerian.jl")
 include("qLaw_transfer_cache.jl")
 include("qLaw_transfer_generation.jl")
+include("publication_plotting.jl")
 
 export qLawParams
 export generate_qlaw_transfer
 export plot_transfer
 export dump_to_mat
+export generate_publication_figures
 
 end
