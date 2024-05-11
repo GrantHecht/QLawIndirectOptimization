@@ -63,8 +63,8 @@ function main()
         meeParams                = meeParams,
         spaceCraft               = spaceCraft,
         desolver                 = Vern7(),
-        reltol                   = 1e-8,
-        abstol                   = 1e-8,
+        reltol                   = 1e-10,
+        abstol                   = 1e-10,
         maxRevs                  = 600.0,
         integStepOpt             = 1.0,
         integStepGen             = 1.0,
@@ -95,7 +95,8 @@ function main()
     #     num_particles   = 30,
     # )
 
-    qLawPs.oeW .= [6.714806348309516, 7.957793270469378, 5.25926959747461, 1.9088836107960239, 0.0]
+    # First solution found (50 particles with only 3600 seconds run time)
+    qLawPs.oeW .= [6.714806348309516,7.957793270469378,5.25926959747461,1.9088836107960239,0.0]
     qLawPs.ηr = 0.09134109317011999
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 

@@ -3,6 +3,7 @@ Manifest.toml
 data/TAES/*
 *.tar.gz
 .DS_Store
+.vscode
 
 # But don't ignore these
 !**/**_cp.txt

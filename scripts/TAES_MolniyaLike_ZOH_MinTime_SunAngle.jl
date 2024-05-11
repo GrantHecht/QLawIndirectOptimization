@@ -63,8 +63,8 @@ function main()
         meeParams                = meeParams,
         spaceCraft               = spaceCraft,
         desolver                 = Vern7(),
-        reltol                   = 1e-8,
-        abstol                   = 1e-8,
+        reltol                   = 1e-10,
+        abstol                   = 1e-10,
         maxRevs                  = 400.0,
         integStepOpt             = 1.0,
         integStepGen             = 1.0,
@@ -95,7 +95,7 @@ function main()
     #     num_particles   = 30,
     # )
 
-    qLawPs.oeW .= [7.350742539560377, 5.750272709564786, 9.879659749180485, 5.4969776314248655, 0.0]
+    qLawPs.oeW .= [7.350742539560377,5.750272709564786,9.879659749180485,5.4969776314248655,0.0]
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # For unconstrained case

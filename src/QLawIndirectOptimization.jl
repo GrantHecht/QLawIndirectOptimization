@@ -12,6 +12,7 @@ using LaTeXStrings
 import MAT
 import GlobalOptimization
 import CairoMakie as CM
+CM.activate!(; type = "pdf", pt_per_unit = 1.0)
 
 # Define some functions for easy use of 
 # c generated code
