@@ -109,7 +109,7 @@ function generate_thrust_angle_broken_axis_figure(dir_path, cache::QLawTransferC
         CM.notify(lims)
 
         # Save figure
-        CM.save(joinpath(dir_path, "sun_angles.png"), fig)
+        CM.save(joinpath(dir_path, "sun_angles.pdf"), fig)
     end
     return nothing
 end
@@ -137,7 +137,7 @@ function generate_thrust_angle_figure(dir_path, cache::QLawTransferCache, ps::qL
         )
 
         # Save figure
-        CM.save(joinpath(dir_path, "sun_angles.png"), fig)
+        CM.save(joinpath(dir_path, "sun_angles.pdf"), fig)
     end
     return nothing
 end
@@ -228,7 +228,7 @@ function generate_keplerian_element_figure(dir_path, cache::QLawTransferCache, p
         CM.linkxaxes!(axs...)
 
         # Save figure
-        CM.save(joinpath(dir_path, "keplerian_elements.png"), fig)
+        CM.save(joinpath(dir_path, "keplerian_elements.pdf"), fig)
     end
     return nothing
 end
