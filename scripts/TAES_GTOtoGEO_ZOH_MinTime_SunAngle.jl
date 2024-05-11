@@ -91,13 +91,13 @@ function main()
     # PSO Optimization
     # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
     #     qLawPs, cost; 
-    #     max_time        = 500.0, 
+    #     max_time        = 12*3600, 
     #     show_trace      = true, 
-    #     num_particles   = 100,
+    #     num_particles   = 200,
     # )
 
     # Post optimization trajectory generation
-    qLawPs.oeW .= [3.4289069981082325, 1.589244979863417, 9.514483085768012, 0.0, 0.0]
+    qLawPs.oeW .= [2.617754879938328, 1.1180063421283637, 6.967104541281881, 0.0, 0.0]
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # Save solution information
