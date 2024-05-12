@@ -96,7 +96,7 @@ function main()
     #     num_particles   = 200,
     # )
 
-    # Post optimization trajectory generation
+    # From 12 hour optimization
     qLawPs.oeW .= [2.617754879938328, 1.1180063421283637, 6.967104541281881, 0.0, 0.0]
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 

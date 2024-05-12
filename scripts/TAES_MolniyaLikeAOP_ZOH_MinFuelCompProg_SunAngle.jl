@@ -66,11 +66,11 @@ function main()
         desolver                 = Vern7(),
         reltol                   = 1e-8,
         abstol                   = 1e-8,
-        maxRevs                  = 600.0,
+        maxRevs                  = 800.0,
         integStepOpt             = 1.0,
         integStepGen             = 1.0,
         writeData                = true,
-        type                     = :QDUC,
+        type                     = :QDSA,
         eSteps                   = 10,
         eclipsing                = true,
         thrustSunAngleConstraint = true,
@@ -89,16 +89,24 @@ function main()
     end
 
     # Solve
-    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-    #     qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
-    #     max_time        = 2*3600.0, 
-    #     show_trace      = true, 
-    #     num_particles   = 30,
-    # )
+    cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+        qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
+        max_time        = 12*3600.0, 
+        show_trace      = true, 
+        num_particles   = 200,
+    )
 
-    qLawPs.oeW .= [8.51023806445907, 9.780059207209916, 3.548398188141077, 0.0, 0.2844772056966804]
-    qLawPs.ηr = 0.5
-    cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
+    # Solution from 12 hour optimization
+    qLawPs.oeW .= [3.178971958167177,9.29847771486265,2.654707427884393,0.0,0.14368186888116805]
+    qLawPs.ηr = 0.42253990459299684
+
+    # This solution found with SA constraint off (works if maxRevs == 700)
+    # qLawPs.oeW .= [8.51023806445907, 9.780059207209916, 3.548398188141077, 0.0, 0.2844772056966804]
+    # qLawPs.ηr = 0.5
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
+
+    # REMOVE THIS AFTER SOLUTION FOUND (initial particle location for one particle in swarm)
+    #[8.51023806445907, 9.780059207209916, 3.548398188141077, 0.2844772056966804, 0.5]
 
     # Save solution information
     jldsave(

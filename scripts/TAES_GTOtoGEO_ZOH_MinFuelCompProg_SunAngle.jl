@@ -89,16 +89,21 @@ function main()
     end
 
     # Solve
-    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-    #     qLawPs, cost; 
-    #     max_time        = 600.0, 
-    #     show_trace      = true, 
-    #     num_particles   = 30,
-    # )
+    cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+        qLawPs, cost; 
+        max_time        = 12*3600, 
+        show_trace      = true, 
+        num_particles   = 200,
+    )
 
-    qLawPs.oeW .= [0.5348192716035621, 3.4832934543785257, 9.455961810142009, 0.0, 0.0]
-    qLawPs.ηr = 0.4816220636932868
+    # From 12 hour optimization
+    qLawPs.oeW .= [0.44543573750625043,3.7085302693673117,9.879181497473244,0.0,0.0]
+    qLawPs.ηr = 0.49071780732898557
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
+
+    # qLawPs.oeW .= [0.5348192716035621, 3.4832934543785257, 9.455961810142009, 0.0, 0.0]
+    # qLawPs.ηr = 0.4816220636932868
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # Save solution information
     jldsave(

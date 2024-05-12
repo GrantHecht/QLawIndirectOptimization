@@ -66,11 +66,11 @@ function main()
         desolver                 = Vern7(),
         reltol                   = 1e-8,
         abstol                   = 1e-8,
-        maxRevs                  = 400.0,
+        maxRevs                  = 600.0,
         integStepOpt             = 1.0,
         integStepGen             = 1.0,
         writeData                = true,
-        type                     = :QDUC,
+        type                     = :QDSA,
         eSteps                   = 10,
         eclipsing                = true,
         thrustSunAngleConstraint = true,
@@ -91,10 +91,14 @@ function main()
     # Solve
     cache, meef, kepf, time, retcode = generate_qlaw_transfer(
         qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
-        max_time        = 2*3600.0, 
+        max_time        = 12*3600.0, 
         show_trace      = true, 
-        num_particles   = 30,
+        num_particles   = 200,
     )
+
+    # From 12 hour optimization
+    qLawPs.oeW .= [10.0,1.2089577606081345,0.873052700670224,0.0,0.01633465971623084] 
+    cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # qLawPs.oeW .= [9.546535123066946, 4.9366795064551185, 3.360605913416598, 1.202994187072187, 0.0]
     # cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
