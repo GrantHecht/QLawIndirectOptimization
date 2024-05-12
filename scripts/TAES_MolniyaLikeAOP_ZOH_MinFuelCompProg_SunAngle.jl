@@ -89,16 +89,17 @@ function main()
     end
 
     # Solve
-    cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-        qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
-        max_time        = 12*3600.0, 
-        show_trace      = true, 
-        num_particles   = 200,
-    )
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+    #     qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
+    #     max_time        = 12*3600.0, 
+    #     show_trace      = true, 
+    #     num_particles   = 200,
+    # )
 
     # Solution from 12 hour optimization
     qLawPs.oeW .= [3.178971958167177,9.29847771486265,2.654707427884393,0.0,0.14368186888116805]
     qLawPs.ηr = 0.42253990459299684
+    cache, meef, kepf, time, retcode = generate_qlaw_transfer(qLawPs)
 
     # This solution found with SA constraint off (works if maxRevs == 700)
     # qLawPs.oeW .= [8.51023806445907, 9.780059207209916, 3.548398188141077, 0.0, 0.2844772056966804]

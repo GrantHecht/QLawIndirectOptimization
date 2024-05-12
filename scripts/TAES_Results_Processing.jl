@@ -8,6 +8,8 @@ function main(transfer_str::String)
     files = Dict(
         "gto_min_fuel" => joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinFuel.jld2"),
         "gto_min_time" => joinpath(@__DIR__, "..", "data", "TAES", "GEO_MinTime.jld2"),
+        "molniya_like_aop_min_time" => joinpath(@__DIR__, "..", "data", "TAES", "MolniyaLikeAOP_MinTime.jld2"),
+        "molniya_like_aop_min_fuel" => joinpath(@__DIR__, "..", "data", "TAES", "MolniyaLikeAOP_MinFuel.jld2"),
         "molniya_like_min_fuel" => joinpath(@__DIR__, "..", "data", "TAES", "MolniyaLIke_MinFuel.jld2"),
         "molniya_like_min_time" => joinpath(@__DIR__, "..", "data", "TAES", "MolniyaLIke_MinTime.jld2"),
         "molniya_like_np_min_fuel" => joinpath(@__DIR__, "..", "data", "TAES", "MolniyaLikeNP_MinFuel.jld2"),
@@ -37,7 +39,8 @@ function main(transfer_str::String)
 end
 
 gto_str_list = ("gto_min_time", "gto_min_fuel")
-molniya_str_list = ("molniya_like_min_time", "molniya_like_np_min_time", "molniya_like_min_fuel", "molniya_like_np_min_fuel")
+#molniya_str_list = ("molniya_like_min_time", "molniya_like_np_min_time", "molniya_like_min_fuel", "molniya_like_np_min_fuel")
+molniya_str_list = ("molniya_like_aop_min_time", "molniya_like_aop_min_fuel")
 for str in (gto_str_list..., molniya_str_list...)
     main(str)
 end

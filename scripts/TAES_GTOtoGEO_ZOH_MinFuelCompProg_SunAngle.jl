@@ -89,12 +89,12 @@ function main()
     end
 
     # Solve
-    cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-        qLawPs, cost; 
-        max_time        = 12*3600, 
-        show_trace      = true, 
-        num_particles   = 200,
-    )
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+    #     qLawPs, cost; 
+    #     max_time        = 12*3600, 
+    #     show_trace      = true, 
+    #     num_particles   = 200,
+    # )
 
     # From 12 hour optimization
     qLawPs.oeW .= [0.44543573750625043,3.7085302693673117,9.879181497473244,0.0,0.0]

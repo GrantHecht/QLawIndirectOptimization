@@ -47,7 +47,7 @@ function main()
 
     # Define tolerance on targeted elements
     atol        = 20.0
-    etol        = 0.001
+    etol        = 0.005
     itol        = 0.01
     Ωtol        = 0.01
     ωtol        = 0.01
@@ -89,12 +89,12 @@ function main()
     end
 
     # Solve
-    cache, meef, kepf, time, retcode = generate_qlaw_transfer(
-        qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
-        max_time        = 12*3600.0, 
-        show_trace      = true, 
-        num_particles   = 200,
-    )
+    # cache, meef, kepf, time, retcode = generate_qlaw_transfer(
+    #     qLawPs, cost, QLawIndirectOptimization.ThreadedPSO; 
+    #     max_time        = 12*3600.0, 
+    #     show_trace      = true, 
+    #     num_particles   = 200,
+    # )
 
     # From 12 hour optimization
     qLawPs.oeW .= [10.0,1.2089577606081345,0.873052700670224,0.0,0.01633465971623084] 
